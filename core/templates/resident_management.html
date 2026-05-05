@@ -1,0 +1,939 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Management | AptCare Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --accent-light: #eef2ff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+            
+            /* Sidebar Dimensions */
+            --sidebar-width: 260px;
+            --sidebar-shrunk-width: 80px;
+        }
+
+        body { 
+            background-color: var(--primary-bg); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        /* ================= Layout & Sidebar ================= */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            overflow-x: hidden; display: flex; flex-direction: column;
+        }
+
+        #sidebar.shrunk { width: var(--sidebar-shrunk-width); }
+
+        .sidebar-brand {
+            height: 80px; display: flex; align-items: center; padding: 0 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.04); white-space: nowrap; overflow: hidden;
+            text-decoration: none; width: 100%;
+        }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s ease; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        
+        .nav-item { width: 100%; padding: 0 16px; }
+        .mt-auto { width: 100%; }
+        
+        .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; 
+            font-weight: 500; white-space: nowrap; overflow: hidden; width: 100%;
+        }
+        .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        .nav-link:hover { background: var(--accent-light); color: var(--accent-color); }
+        .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; min-width: 100%; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 34px; height: 34px; }
+        #sidebar.shrunk .nav-item { padding: 0 14px; }
+        #sidebar.shrunk .nav-link { padding: 14px 0; justify-content: center; margin: 0; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        /* ================= Main Content Area ================= */
+        #content { 
+            width: 100%; margin-left: var(--sidebar-width); 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        #content.expanded { margin-left: var(--sidebar-shrunk-width); }
+        .content-inner { padding: 0 30px 30px 30px; flex-grow: 1; }
+
+        /* ================= Smart Floating Header ================= */
+        .header-wrapper {
+            position: sticky; top: 0; z-index: 900;
+            padding-top: 20px; padding-bottom: 20px;
+            background: var(--primary-bg); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .header-wrapper.hide-header { transform: translateY(-100%); }
+
+        .top-header {
+            background: #ffffff; border-radius: 20px; padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); transition: all 0.2s; cursor: pointer; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* ================= Cards & Stats ================= */
+        .stat-card { border: none; border-radius: 20px; transition: transform 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.03); background: #ffffff; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+        
+        .table-card { background: #ffffff; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: none; }
+        .table thead th { background: transparent; color: var(--gray-text); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f4f7fe; padding: 16px 24px; }
+        .table tbody td { padding: 16px 24px; vertical-align: middle; border-bottom: 1px solid #f4f7fe; color: var(--dark-text); font-weight: 500; font-size: 0.9rem; }
+
+        /* --- SEARCH BOX --- */
+        .search-wrapper { position: relative; }
+        .search-wrapper input { padding-left: 38px; border-radius: 50px; border: 2px solid #eef1fd; background: #f8faff; transition: 0.2s; }
+        .search-wrapper input:focus { background: white; box-shadow: 0 0 0 4px rgba(67,97,238,0.1); border-color: var(--accent-color); outline: none; }
+        .search-wrapper .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a3aed1; }
+
+        /* --- BADGES --- */
+        .badge-active   { background: #e8f5e9; color: #2e7d32; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px; border: 1px solid #c8e6c9;}
+        .badge-inactive { background: #fff5f5; color: #c62828; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px; border: 1px solid #fecaca;}
+        .badge-pending  { background: #fff4e5; color: #e65100; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px; border: 1px solid #ffe0b2;}
+
+        /* --- MODALS --- */
+        .modal-content { border-radius: 20px; border: none; }
+        .form-control, .form-select { border-radius: 10px; border: 2px solid #eef1fd; background: #f8faff; padding: 10px 15px; }
+        .form-control:focus, .form-select:focus { border-color: var(--accent-color); background: #ffffff; box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+
+        /* Skeleton */
+        .skeleton { background: linear-gradient(90deg,#e8e8e8 25%,#f5f5f5 50%,#e8e8e8 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 6px; display: inline-block; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        <ul class="nav sidebar-nav">
+            <li class="nav-item"><a class="nav-link" href="{% url 'admin-dashboard-page' %}"><i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'all-complaints' %}"><i class="fa fa-list-check"></i> <span class="nav-text">All Complaints</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'neg-esc-page' %}"><i class="fa fa-triangle-exclamation"></i> <span class="nav-text">Neglect & Escalation</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'analytics' %}"><i class="fa fa-chart-pie"></i> <span class="nav-text">Analytics & Reports</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'staff-performance-page' %}"><i class="fa fa-user-tie"></i> <span class="nav-text">Staff Performance</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{% url 'resident-manage-page' %}"><i class="fa fa-users"></i> <span class="nav-text">Resident Management</span></a></li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item"><a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;"><i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span></a></li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+
+        <div class="header-wrapper" id="smartHeader">
+            <div class="content-inner pb-0">
+                <header class="top-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="sidebarToggle" class="toggle-btn shadow-sm"><i class="fas fa-bars"></i></button>
+                        <div>
+                            <h1 class="header-title">Resident Management</h1>
+                            <p class="text-muted small mb-0 d-none d-md-block">Securely add, edit, and control resident access.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="addResidentBtn">
+                        <i class="fa fa-user-plus me-2"></i>Add Resident
+                    </button>
+                </header>
+            </div>
+        </div>
+
+        <div class="content-inner pt-2">
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-5 border-primary h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Total Residents</h6>
+                                <h2 class="fw-bolder mb-0 text-dark" id="statTotal"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-users fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-5 border-success h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Active Accounts</h6>
+                                <h2 class="fw-bolder mb-0 text-success" id="statActive"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-user-check fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-5 border-danger h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Inactive / Blocked</h6>
+                                <h2 class="fw-bolder mb-0 text-danger" id="statInactive"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-user-slash fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-5 border-warning h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Pending Setup</h6>
+                                <h2 class="fw-bolder mb-0 text-warning" id="statPending"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-user-clock fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-5">
+                        <div class="search-wrapper">
+                            <i class="fa fa-search search-icon"></i>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search by name, flat, block or email...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="blockFilter">
+                            <option value="">All Blocks</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="pending">Pending Password</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button class="btn btn-outline-primary bg-light border-0 shadow-sm rounded-pill px-3 w-100 fw-bold" id="exportBtn">
+                            <i class="fa fa-download me-1"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card table-card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Resident</th>
+                                <th>Flat / Block</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Added On</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residentsTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                                    <span class="text-muted fw-bold">Loading residents database...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-0 p-3">
+                    <small class="text-muted fw-bold" id="tableCount">Loading...</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addResidentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-0 bg-light pb-3 px-4 pt-4">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="fa fa-user-plus text-primary me-2"></i>Add New Resident
+                </h5>
+                <button type="button" class="btn-close bg-white rounded-circle p-2 shadow-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-primary border-0 small mb-4 fw-medium" style="background:#eef2ff;color:#4361ee;">
+                    <i class="fa fa-info-circle me-2"></i>
+                    Login credentials will be <strong>automatically sent</strong> to the resident's email.
+                    Username will be auto-set as <strong>Block-FlatNumber</strong>.
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">First Name</label>
+                        <input type="text" class="form-control" id="newFirstName" placeholder="e.g. Rajesh">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Last Name</label>
+                        <input type="text" class="form-control" id="newLastName" placeholder="e.g. Kumar">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Block <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newBlock" placeholder="e.g. A">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Flat Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newFlat" placeholder="e.g. 101">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="newEmail" placeholder="resident@email.com">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Phone Number</label>
+                        <input type="tel" class="form-control" id="newPhone" placeholder="+91 98765 43210">
+                    </div>
+                </div>
+
+                <div class="mt-3 p-3 bg-light rounded-3 border d-none" id="usernamePreview">
+                    <div class="small text-muted fw-bold">Auto-generated username:</div>
+                    <div class="fw-bold text-primary fs-5" id="usernamePreviewText">—</div>
+                </div>
+
+                <div class="alert alert-danger d-none mt-3 small fw-bold border-0 shadow-sm" id="addResidentError"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light border rounded-pill px-4 fw-bold text-muted shadow-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="saveResidentBtn">
+                    <i class="fa fa-paper-plane me-2"></i>Add & Send Credentials
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editResidentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-0 bg-light pb-3 px-4 pt-4">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="fa fa-user-pen text-primary me-2"></i>Edit Resident
+                </h5>
+                <button type="button" class="btn-close bg-white rounded-circle p-2 shadow-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="editResidentId">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">First Name</label>
+                        <input type="text" class="form-control" id="editFirstName">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Last Name</label>
+                        <input type="text" class="form-control" id="editLastName">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Block</label>
+                        <input type="text" class="form-control" id="editBlock">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Flat Number</label>
+                        <input type="text" class="form-control" id="editFlat">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Email</label>
+                        <input type="email" class="form-control" id="editEmail">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Phone</label>
+                        <input type="tel" class="form-control" id="editPhone">
+                    </div>
+                </div>
+                <div class="alert alert-danger d-none mt-3 small fw-bold border-0 shadow-sm" id="editResidentError"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light border rounded-pill px-4 fw-bold text-muted shadow-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="updateResidentBtn">
+                    <i class="fa fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3" id="confirmIcon"></div>
+                <h5 class="fw-bold mb-2 text-dark" id="confirmTitle">Are you sure?</h5>
+                <p class="text-muted small mb-4 fw-medium lh-base" id="confirmMessage"></p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-light border rounded-pill px-4 fw-bold text-muted shadow-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn rounded-pill px-4 fw-bold shadow-sm" id="confirmActionBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ─────────────────────────────────────────
+    // CONFIG & AUTH
+    // ─────────────────────────────────────────
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token    = localStorage.getItem('aptcare_token');
+    const user     = JSON.parse(localStorage.getItem('aptcare_user') || 'null');
+
+    if (!token || !user) window.location.href = '{% url "login-page" %}';
+    if (user && user.role === 'user') window.location.href = '{% url "dashboard" %}';
+
+    // ─────────────────────────────────────────
+    // UI: SIDEBAR & SMART HEADER
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    let lastScrollTop = 0;
+    const smartHeader = document.getElementById('smartHeader');
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            smartHeader.classList.add('hide-header');
+        } else {
+            smartHeader.classList.remove('hide-header');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+    }, false);
+
+    // ─────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────
+    let allResidents = [];
+
+    // ─────────────────────────────────────────
+    // LOAD RESIDENTS
+    // ─────────────────────────────────────────
+    async function loadResidents() {
+        try {
+            const res  = await fetch(`${API_BASE}/residents/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (res.status === 401) { localStorage.clear(); window.location.href = '{% url "login-page" %}'; return; }
+            allResidents = await res.json();
+            updateStats();
+            populateBlockFilter();
+            applyFilters(); // Uses real-time filtering to render
+        } catch (err) {
+            document.getElementById('residentsTableBody').innerHTML = `
+                <tr><td colspan="7" class="text-center text-danger py-4 fw-bold">
+                    <i class="fa fa-triangle-exclamation me-2"></i>Failed to load residents. Refresh page.
+                </td></tr>`;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // STATS
+    // ─────────────────────────────────────────
+    function updateStats() {
+        const total    = allResidents.length;
+        const active   = allResidents.filter(r => r.is_active).length;
+        const inactive = allResidents.filter(r => !r.is_active).length;
+        const pending  = allResidents.filter(r => r.must_change_password && r.is_active).length;
+
+        document.getElementById('statTotal').textContent    = total;
+        document.getElementById('statActive').textContent   = active;
+        document.getElementById('statInactive').textContent = inactive;
+        document.getElementById('statPending').textContent  = pending;
+    }
+
+    // ─────────────────────────────────────────
+    // BLOCK FILTER
+    // ─────────────────────────────────────────
+    function populateBlockFilter() {
+        const blocks = [...new Set(allResidents.map(r => r.block).filter(Boolean))].sort();
+        const sel = document.getElementById('blockFilter');
+        sel.innerHTML = `<option value="">All Blocks</option>` +
+            blocks.map(b => `<option value="${b}">${b}</option>`).join('');
+    }
+
+    // ─────────────────────────────────────────
+    // RENDER TABLE
+    // ─────────────────────────────────────────
+    function getStatusBadge(r) {
+        if (!r.is_active) return `<span class="badge-inactive">Inactive</span>`;
+        if (r.must_change_password) return `<span class="badge-pending">Pending Password</span>`;
+        return `<span class="badge-active">Active</span>`;
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('residentsTableBody');
+        document.getElementById('tableCount').textContent = `Showing ${data.length} resident${data.length !== 1 ? 's' : ''}`;
+
+        if (!data.length) {
+            tbody.innerHTML = `
+                <tr><td colspan="7" class="text-center py-5 text-muted">
+                    <i class="fa fa-users fa-2x mb-3 d-block opacity-25"></i>
+                    <span class="fw-bold">No residents match your search.</span>
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(r => `
+            <tr class="${!r.is_active ? 'opacity-50' : ''}">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4361ee,#3451d1);
+                                    color:white;display:flex;align-items:center;justify-content:center;
+                                    font-weight:800;font-size:1rem;flex-shrink:0;box-shadow:0 2px 8px rgba(67,97,238,0.3);">
+                            ${(r.full_name || r.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">${r.full_name || '—'}</div>
+                            <div class="text-muted fw-medium" style="font-size:0.75rem;">@${r.username}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border px-3 py-2 fw-bold shadow-sm">${r.block || '—'}-${r.flat_number || '—'}</span>
+                </td>
+                <td class="small text-muted fw-medium">${r.email || '—'}</td>
+                <td class="small text-muted fw-medium">${r.phone || '—'}</td>
+                <td>${getStatusBadge(r)}</td>
+                <td class="small text-muted fw-medium">${new Date(r.date_joined).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</td>
+                <td class="text-end pe-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button class="btn btn-sm btn-light bg-white border rounded-circle shadow-sm edit-btn" style="width:32px;height:32px;"
+                                data-id="${r.id}" title="Edit Profile">
+                            <i class="fa fa-pen text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light bg-white border rounded-circle shadow-sm reset-btn" style="width:32px;height:32px;"
+                                data-id="${r.id}" data-email="${r.email}" title="Reset Password">
+                            <i class="fa fa-key text-warning"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light bg-white border rounded-circle shadow-sm toggle-btn" style="width:32px;height:32px;"
+                                data-id="${r.id}" data-active="${r.is_active}"
+                                title="${r.is_active ? 'Deactivate Account' : 'Activate Account'}">
+                            <i class="fa fa-${r.is_active ? 'user-slash text-danger' : 'user-check text-success'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light bg-white border rounded-circle shadow-sm delete-btn" style="width:32px;height:32px;"
+                                data-id="${r.id}" data-name="${r.full_name || r.username}" title="Permanently Delete">
+                            <i class="fa fa-trash-alt text-danger"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`).join('');
+
+        attachRowListeners();
+    }
+
+    // ─────────────────────────────────────────
+    // FILTERS
+    // ─────────────────────────────────────────
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const block  = document.getElementById('blockFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        const filtered = allResidents.filter(r => {
+            const matchSearch = !search ||
+                (r.full_name   || '').toLowerCase().includes(search) ||
+                (r.username    || '').toLowerCase().includes(search) ||
+                (r.email       || '').toLowerCase().includes(search) ||
+                (r.flat_number || '').toLowerCase().includes(search) ||
+                (r.block       || '').toLowerCase().includes(search);
+
+            const matchBlock  = !block  || r.block === block;
+            const matchStatus = !status ||
+                (status === 'active'   &&  r.is_active && !r.must_change_password) ||
+                (status === 'inactive' && !r.is_active) ||
+                (status === 'pending'  &&  r.is_active &&  r.must_change_password);
+
+            return matchSearch && matchBlock && matchStatus;
+        });
+
+        renderTable(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('blockFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+    // ─────────────────────────────────────────
+    // USERNAME PREVIEW
+    // ─────────────────────────────────────────
+    function updateUsernamePreview() {
+        const block = document.getElementById('newBlock').value.trim().toUpperCase();
+        const flat  = document.getElementById('newFlat').value.trim();
+        const prev  = document.getElementById('usernamePreview');
+        const text  = document.getElementById('usernamePreviewText');
+
+        if (block && flat) {
+            text.textContent = `${block}-${flat}`;
+            prev.classList.remove('d-none');
+        } else {
+            prev.classList.add('d-none');
+        }
+    }
+
+    document.getElementById('newBlock').addEventListener('input', updateUsernamePreview);
+    document.getElementById('newFlat').addEventListener('input', updateUsernamePreview);
+
+    // ─────────────────────────────────────────
+    // ADD RESIDENT
+    // ─────────────────────────────────────────
+    document.getElementById('addResidentBtn').addEventListener('click', () => {
+        ['newFirstName','newLastName','newBlock','newFlat','newEmail','newPhone'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('usernamePreview').classList.add('d-none');
+        document.getElementById('addResidentError').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('addResidentModal')).show();
+    });
+
+    document.getElementById('saveResidentBtn').addEventListener('click', async () => {
+        const btn        = document.getElementById('saveResidentBtn');
+        const errEl      = document.getElementById('addResidentError');
+        const firstName  = document.getElementById('newFirstName').value.trim();
+        const lastName   = document.getElementById('newLastName').value.trim();
+        const block      = document.getElementById('newBlock').value.trim();
+        const flatNumber = document.getElementById('newFlat').value.trim();
+        const email      = document.getElementById('newEmail').value.trim();
+        const phone      = document.getElementById('newPhone').value.trim();
+
+        if (!block || !flatNumber || !email) {
+            errEl.innerHTML = '<i class="fa fa-triangle-exclamation me-1"></i>Block, Flat Number, and Email are required.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        errEl.classList.add('d-none');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Adding...`;
+
+        try {
+            const res  = await fetch(`${API_BASE}/residents/add/`, {
+                method : 'POST',
+                headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' },
+                body   : JSON.stringify({ first_name: firstName, last_name: lastName, block, flat_number: flatNumber, email, phone })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errEl.innerHTML = `<i class="fa fa-triangle-exclamation me-1"></i>${data.error || 'Failed to add resident.'}`;
+                errEl.classList.remove('d-none');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa fa-paper-plane me-2"></i>Add & Send Credentials`;
+                return;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('addResidentModal')).hide();
+            showToast(
+                data.email_sent
+                    ? `✅ Resident ${data.username} added! Credentials sent to ${email}.`
+                    : `⚠️ Resident ${data.username} added! (Email sending failed)`,
+                data.email_sent ? 'success' : 'warning'
+            );
+            await loadResidents();
+
+        } catch (err) {
+            errEl.innerHTML = '<i class="fa fa-triangle-exclamation me-1"></i>Server error. Please try again.';
+            errEl.classList.remove('d-none');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa fa-paper-plane me-2"></i>Add & Send Credentials`;
+    });
+
+    // ─────────────────────────────────────────
+    // ROW ACTION LISTENERS
+    // ─────────────────────────────────────────
+    function attachRowListeners() {
+        // Edit
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = parseInt(this.dataset.id);
+                const r  = allResidents.find(x => x.id === id);
+                if (!r) return;
+
+                document.getElementById('editResidentId').value  = r.id;
+                document.getElementById('editFirstName').value   = r.full_name.split(' ')[0] || '';
+                document.getElementById('editLastName').value    = r.full_name.split(' ').slice(1).join(' ') || '';
+                document.getElementById('editBlock').value       = r.block || '';
+                document.getElementById('editFlat').value        = r.flat_number || '';
+                document.getElementById('editEmail').value       = r.email || '';
+                document.getElementById('editPhone').value       = r.phone || '';
+                document.getElementById('editResidentError').classList.add('d-none');
+
+                new bootstrap.Modal(document.getElementById('editResidentModal')).show();
+            });
+        });
+
+        // Reset Password
+        document.querySelectorAll('.reset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id    = this.dataset.id;
+                const email = this.dataset.email;
+                showConfirm(
+                    'fa-key text-warning',
+                    'Reset Resident Password?',
+                    `A new temporary password will be auto-generated and emailed to <strong>${email}</strong>.`,
+                    'warning',
+                    async () => {
+                        try {
+                            const res  = await fetch(`${API_BASE}/residents/${id}/reset-password/`, {
+                                method : 'POST',
+                                headers: { 'Authorization': `Token ${token}` }
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                                showToast('✅ ' + data.message, 'success');
+                                await loadResidents();
+                            } else {
+                                showToast('❌ ' + (data.error || 'Failed.'), 'danger');
+                            }
+                        } catch { showToast('❌ Server error.', 'danger'); }
+                    }
+                );
+            });
+        });
+
+        // Toggle Activate/Deactivate
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id       = this.dataset.id;
+                const isActive = this.dataset.active === 'true';
+                const action   = isActive ? 'Deactivate' : 'Activate';
+                const icon     = isActive ? 'fa-user-slash text-danger' : 'fa-user-check text-success';
+
+                showConfirm(
+                    icon,
+                    `${action} Resident Account?`,
+                    isActive
+                        ? 'This resident will be immediately logged out and barred from logging in.'
+                        : 'This resident will be granted access to log in again.',
+                    isActive ? 'danger' : 'success',
+                    async () => {
+                        try {
+                            const res  = await fetch(`${API_BASE}/residents/${id}/toggle/`, {
+                                method : 'PATCH',
+                                headers: { 'Authorization': `Token ${token}` }
+                            });
+                            const data = await res.json();
+                            if (res.ok) {
+                                showToast(`✅ Resident successfully ${data.is_active ? 'activated' : 'deactivated'}.`, 'success');
+                                await loadResidents();
+                            } else {
+                                showToast('❌ ' + (data.error || 'Failed.'), 'danger');
+                            }
+                        } catch { showToast('❌ Server error.', 'danger'); }
+                    }
+                );
+            });
+        });
+
+        // Hard Delete
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id   = this.dataset.id;
+                const name = this.dataset.name;
+
+                showConfirm(
+                    'fa-trash-alt text-danger',
+                    'Permanently Delete Resident?',
+                    `Are you completely sure you want to delete <strong>${name}</strong>? This action cannot be undone and will permanently wipe their account from the database.`,
+                    'danger',
+                    async () => {
+                        try {
+                            const res = await fetch(`${API_BASE}/residents/${id}/delete/`, {
+                                method : 'DELETE',
+                                headers: { 'Authorization': `Token ${token}` }
+                            });
+                            
+                            if (res.ok) {
+                                showToast(`✅ Resident ${name} deleted permanently.`, 'success');
+                                await loadResidents();
+                            } else {
+                                // Try to parse error if it exists, otherwise generic failure
+                                const data = await res.json().catch(() => ({}));
+                                showToast('❌ ' + (data.error || 'Failed to delete resident.'), 'danger');
+                            }
+                        } catch { showToast('❌ Server error while attempting to delete.', 'danger'); }
+                    }
+                );
+            });
+        });
+    }
+
+    // ─────────────────────────────────────────
+    // EDIT RESIDENT SAVE
+    // ─────────────────────────────────────────
+    document.getElementById('updateResidentBtn').addEventListener('click', async () => {
+        const id  = document.getElementById('editResidentId').value;
+        const btn = document.getElementById('updateResidentBtn');
+        const errEl = document.getElementById('editResidentError');
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Saving...`;
+        errEl.classList.add('d-none');
+
+        try {
+            const res = await fetch(`${API_BASE}/residents/${id}/edit/`, {
+                method : 'PATCH',
+                headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' },
+                body   : JSON.stringify({
+                    first_name  : document.getElementById('editFirstName').value.trim(),
+                    last_name   : document.getElementById('editLastName').value.trim(),
+                    block       : document.getElementById('editBlock').value.trim(),
+                    flat_number : document.getElementById('editFlat').value.trim(),
+                    email       : document.getElementById('editEmail').value.trim(),
+                    phone       : document.getElementById('editPhone').value.trim(),
+                })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                errEl.innerHTML = `<i class="fa fa-triangle-exclamation me-1"></i>${data.error || 'Failed to update.'}`;
+                errEl.classList.remove('d-none');
+            } else {
+                bootstrap.Modal.getInstance(document.getElementById('editResidentModal')).hide();
+                showToast('✅ Resident profile updated successfully.', 'success');
+                await loadResidents();
+            }
+        } catch {
+            errEl.innerHTML = '<i class="fa fa-triangle-exclamation me-1"></i>Server error.';
+            errEl.classList.remove('d-none');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa fa-save me-2"></i>Save Changes`;
+    });
+
+    // ─────────────────────────────────────────
+    // CONFIRM MODAL HELPER
+    // ─────────────────────────────────────────
+    let confirmCallback = null;
+    function showConfirm(icon, title, message, type, callback) {
+        const colorMap = { warning:'text-warning', danger:'text-danger', success:'text-success' };
+        const btnMap   = { warning:'btn-warning', danger:'btn-danger', success:'btn-success' };
+
+        document.getElementById('confirmIcon').innerHTML     = `<div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-2 shadow-sm" style="width:70px;height:70px;"><i class="fa ${icon} fa-2x ${colorMap[type]}"></i></div>`;
+        document.getElementById('confirmTitle').textContent  = title;
+        document.getElementById('confirmMessage').innerHTML  = message;
+        document.getElementById('confirmActionBtn').className = `btn ${btnMap[type]} rounded-pill px-5 fw-bold shadow-sm`;
+        document.getElementById('confirmActionBtn').textContent = 'Confirm';
+        confirmCallback = callback;
+        new bootstrap.Modal(document.getElementById('confirmModal')).show();
+    }
+
+    document.getElementById('confirmActionBtn').addEventListener('click', async () => {
+        bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+        if (confirmCallback) await confirmCallback();
+        confirmCallback = null;
+    });
+
+    // ─────────────────────────────────────────
+    // TOAST NOTIFICATION
+    // ─────────────────────────────────────────
+    function showToast(message, type) {
+        const colorMap = { success:'text-bg-success', danger:'text-bg-danger', warning:'text-bg-warning' };
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-4';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="toast show align-items-center ${colorMap[type]||'text-bg-primary'} border-0 rounded-4 shadow-lg">
+                <div class="d-flex">
+                    <div class="toast-body fw-bold px-3 py-3" style="font-size:0.95rem;">${message}</div>
+                    <button class="btn-close btn-close-white me-3 m-auto" onclick="this.closest('.position-fixed').remove()"></button>
+                </div>
+            </div>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 6000);
+    }
+
+    // ─────────────────────────────────────────
+    // EXPORT CSV
+    // ─────────────────────────────────────────
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        if (!allResidents.length) { alert('No data to export.'); return; }
+        const headers = ['Username','Full Name','Block','Flat','Email','Phone','Status','Added On'];
+        const rows    = allResidents.map(r => [
+            r.username, r.full_name, r.block, r.flat_number,
+            r.email, r.phone,
+            !r.is_active ? 'Inactive' : r.must_change_password ? 'Pending' : 'Active',
+            new Date(r.date_joined).toLocaleDateString('en-IN')
+        ]);
+        const csv  = [headers,...rows].map(r => r.map(v=>`"${v||''}"`).join(',')).join('\n');
+        const blob = new Blob([csv], {type:'text/csv'});
+        const a    = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `aptcare_residents_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    });
+
+    // ─────────────────────────────────────────
+    // SIGN OUT
+    // ─────────────────────────────────────────
+    document.getElementById('signOutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await fetch(`${API_BASE}/auth/logout/`, { method:'POST', headers:{ 'Authorization':`Token ${token}` } }); } catch(_) {}
+        localStorage.clear();
+        window.location.href = '{% url "login-page" %}';
+    });
+
+    // ─────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────
+    loadResidents();
+</script>
+</body>
+</html>

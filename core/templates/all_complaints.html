@@ -1,0 +1,743 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Complaints | AptCare Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --accent-light: #eef2ff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+            
+            --sidebar-width: 260px;
+            --sidebar-shrunk-width: 80px;
+        }
+        
+        body { background-color: var(--primary-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+
+        /* ================= Layout & Sidebar ================= */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            overflow-x: hidden; display: flex; flex-direction: column;
+        }
+
+        #sidebar.shrunk { width: var(--sidebar-shrunk-width); }
+
+        .sidebar-brand { height: 80px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(0,0,0,0.04); text-decoration: none; width: 100%; }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s ease; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        
+        #sidebar .nav-item { width: 100%; padding: 0 16px; }
+        #sidebar .mt-auto { width: 100%; }
+        
+        #sidebar .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; 
+            font-weight: 500; white-space: nowrap; overflow: hidden; width: 100%;
+        }
+        #sidebar .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        #sidebar .nav-link:hover { background: var(--accent-light); color: var(--accent-color); }
+        #sidebar .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 34px; height: 34px; }
+        #sidebar.shrunk .nav-item { padding: 0 14px; }
+        #sidebar.shrunk .nav-link { padding: 14px 0; justify-content: center; margin: 0; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        /* ================= Main Content Area ================= */
+        #content { 
+            width: 100%; margin-left: var(--sidebar-width); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        #content.expanded { margin-left: var(--sidebar-shrunk-width); }
+        .content-inner { padding: 0 30px 30px 30px; flex-grow: 1; }
+
+        /* ================= Smart Floating Header ================= */
+        .header-wrapper { position: sticky; top: 0; z-index: 900; padding-top: 20px; padding-bottom: 20px; background: var(--primary-bg); transition: transform 0.3s; }
+        .header-wrapper.hide-header { transform: translateY(-100%); }
+
+        .top-header { background: #ffffff; border-radius: 20px; padding: 16px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); transition: all 0.2s; cursor: pointer; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* ================= Tables & Cards ================= */
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); background: #ffffff; }
+        .table thead th { background: transparent; color: var(--gray-text); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f4f7fe; padding: 16px 24px; }
+        .table tbody td { padding: 16px 24px; vertical-align: middle; border-bottom: 1px solid #f4f7fe; color: var(--dark-text); font-weight: 500; font-size: 0.9rem; }
+        
+        /* 🔥 SOS ROW HIGHLIGHTING */
+        .sos-row { background-color: #fff5f5 !important; border-left: 4px solid #dc3545; }
+        .sos-row td { border-bottom-color: #fecaca !important; }
+        
+        @keyframes pulseRedBadge { 0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); } 70% { box-shadow: 0 0 0 6px rgba(220,53,69,0); } 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); } }
+        .pulse-red-badge { animation: pulseRedBadge 2s infinite; }
+
+        .badge-status { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3px; }
+        .bg-pending     { background: #fff4e5; color: #ff9800; border: 1px solid #ffe0b2; }
+        .bg-in_progress { background: #eef2ff; color: #4361ee; border: 1px solid #c7d2fe; }
+        .bg-resolved    { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+        .priority-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .p-critical { background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+        .p-high     { background: #ea580c; }
+        .p-medium   { background: #eab308; }
+        .p-low      { background: #16a34a; }
+
+        /* ================= Modals ================= */
+        .modal-content { border-radius: 20px; border: none; }
+        .modal-section { background: #f8faff; border-radius: 12px; padding: 18px; margin-bottom: 15px; border: 1px solid #eef1fd; }
+        .modal-section-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--gray-text); margin-bottom: 12px; letter-spacing: 0.5px; }
+
+        .status-option { cursor: pointer; border-radius: 12px; padding: 12px; border: 2px solid #eef1fd; transition: 0.2s; text-align: center; background: white; }
+        .status-option:hover    { border-color: var(--accent-color); background: var(--accent-light); }
+        .status-option.selected { border-color: var(--accent-color); background: var(--accent-light); color: var(--accent-color); font-weight: 700; }
+
+        .btn-escalate { background: #fff5f5; color: #dc3545; border: 2px solid #fecaca; border-radius: 12px; padding: 12px; width: 100%; transition: 0.2s; font-weight: 700; cursor: pointer; }
+        .btn-escalate:hover    { background: #dc3545; color: white; border-color: #dc3545; }
+        .btn-escalate:disabled { opacity: 0.5; cursor: not-allowed; }
+        .escalated-tag { background: #fee2e2; color: #991b1b; border-radius: 12px; padding: 12px; font-weight: 700; text-align: center; border: 1px solid #fecaca; }
+
+        .helper-checkbox-list { max-height: 140px; overflow-y: auto; background: white; border: 2px solid #eef1fd; border-radius: 10px; padding: 12px; }
+        .helper-item { font-size: 0.85rem; padding: 6px 0; margin-bottom: 4px; border-radius: 6px; transition: background 0.2s; }
+        .helper-item:hover { background: #f8faff; }
+        .helper-item.form-check { padding-left: 2rem; margin-bottom: 0; }
+        .helper-item .form-check-input { cursor: pointer; }
+        .helper-item .form-check-label { cursor: pointer; font-weight: 500; }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        
+        <ul class="nav sidebar-nav">
+            <li class="nav-item"><a class="nav-link" href="{% url 'admin-dashboard-page' %}"><i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{% url 'all-complaints' %}"><i class="fa fa-list-check"></i> <span class="nav-text">All Complaints</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'neg-esc-page' %}"><i class="fa fa-triangle-exclamation"></i> <span class="nav-text">Neglect & Escalation</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'analytics' %}"><i class="fa fa-chart-pie"></i> <span class="nav-text">Analytics & Reports</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'staff-performance-page' %}"><i class="fa fa-user-tie"></i> <span class="nav-text">Staff Performance</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'resident-manage-page' %}"><i class="fa fa-users"></i> <span class="nav-text">Resident Management</span></a></li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item"><a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;"><i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span></a></li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <div class="header-wrapper" id="smartHeader">
+            <div class="content-inner pb-0">
+                <header class="top-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="sidebarToggle" class="toggle-btn shadow-sm"><i class="fas fa-bars"></i></button>
+                        <div>
+                            <h1 class="header-title">All Complaints</h1>
+                            <p class="text-muted small mb-0 d-none d-md-block">Triage, manage, and resolve all incoming maintenance requests.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary shadow-sm rounded-pill px-4 fw-bold" id="export-csv-button">
+                        <i class="fa fa-download me-2"></i>Export CSV
+                    </button>
+                </header>
+            </div>
+        </div>
+
+        <div class="content-inner pt-2">
+            <div class="card p-3 mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-pill"><i class="fa fa-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 rounded-end-pill bg-light" id="search-input" placeholder="Search ID, User, Category...">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <select class="form-select rounded-pill bg-light" id="status-filter">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <select class="form-select rounded-pill bg-light" id="priority-filter">
+                            <option value="">All Priority</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-4">
+                        <select class="form-select rounded-pill bg-light" id="category-filter">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4">
+                        <select class="form-select rounded-pill bg-light fw-bold text-primary" id="date-filter">
+                            <option value="">All Time</option>
+                            <option value="today">Filed Today</option>
+                            <option value="7days">Past 7 Days</option>
+                            <option value="14days">Past 14 Days</option>
+                            <option value="30days">Past 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Ticket ID</th>
+                                <th>User</th>
+                                <th>Category</th>
+                                <th>Priority</th>
+                                <th>Assigned To</th>
+                                <th>Status</th>
+                                <th>Filed On</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaints-table-body">
+                            <tr><td colspan="8" class="text-center py-5">
+                                <div class="spinner-border spinner-border-sm text-primary me-2"></div><span class="text-muted fw-bold">Loading records...</span>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-0 p-3 pt-0 mt-2">
+                    <nav class="d-flex justify-content-between align-items-center">
+                        <p class="small fw-bold text-muted mb-0" id="complaints-count">Showing 0 of 0 complaints</p>
+                        <ul class="pagination pagination-sm mb-0 shadow-sm rounded-pill overflow-hidden">
+                            <li class="page-item disabled" id="previous-page"><a class="page-link border-0 text-dark fw-bold" href="#">Prev</a></li>
+                            <li class="page-item active"   id="current-page"><a class="page-link border-0 bg-primary text-white fw-bold" href="#">1</a></li>
+                            <li class="page-item"          id="next-page"><a class="page-link border-0 text-dark fw-bold" href="#">Next</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="manageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h4 class="modal-title fw-bold text-dark">Manage Request <span id="modalComplaintId" class="text-primary"></span></h4>
+                <button type="button" class="btn-close bg-light rounded-circle p-2" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <div class="modal-section h-100">
+                            <div class="modal-section-title"><i class="fa fa-info-circle me-1 text-primary"></i> Complaint Details</div>
+                            <p class="mb-2 small"><strong>Category:</strong> <span id="modalCategory" class="ms-1 text-dark">—</span></p>
+                            <p class="mb-2 small"><strong>Location:</strong> <span id="modalLocation" class="ms-1 text-dark">—</span></p>
+                            <p class="mb-2 small"><strong>Filed by:</strong> <span id="modalUser" class="ms-1 text-dark fw-bold">—</span></p>
+                            <p class="mb-3 small d-flex align-items-center"><strong>Priority:</strong> <span id="modalPriority" class="ms-2">—</span></p>
+                            <hr class="opacity-25 my-3">
+                            
+                            <p class="mb-2 small"><i class="fa fa-clock text-primary me-2"></i><strong>Filed On:</strong> <span id="modalFiledDate" class="text-dark ms-1">—</span></p>
+                            <p class="mb-3 small d-none" id="resolvedDateContainer"><i class="fa fa-check-double text-success me-2"></i><strong>Resolved On:</strong> <span id="modalResolvedDate" class="text-dark ms-1">—</span></p>
+                            
+                            <div class="p-3 bg-white rounded border border-light mt-3">
+                                <strong class="small d-block mb-1 text-muted">Description:</strong>
+                                <span id="modalDescription" class="small text-dark lh-base">—</span>
+                            </div>
+
+                            <div id="complaintPhotoContainer" class="mt-4" style="display: none;">
+                                <div class="modal-section-title"><i class="fas fa-camera me-1"></i> Attached Evidence</div>
+                                <img id="complaintPhoto" src="" alt="Evidence" class="img-fluid rounded-3 border shadow-sm" style="max-height: 220px; width: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fa fa-user-cog me-1 text-primary"></i> Primary Assignment</div>
+                            <select class="form-select border-primary border-opacity-25 bg-white fw-bold text-dark" id="staffDropdown">
+                                <option value="">Loading staff...</option>
+                            </select>
+                            <div class="mt-2 small text-muted">
+                                Currently assigned to: <strong id="currentStaffName" class="text-primary">None</strong>
+                            </div>
+                        </div>
+
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fa fa-rotate me-1 text-primary"></i> Status Pipeline</div>
+                            <div class="d-flex gap-2">
+                                <div class="status-option flex-fill" data-status="pending">
+                                    <i class="fa fa-hourglass-half text-warning d-block mb-2 fs-5"></i><span class="small fw-bold">Pending</span>
+                                </div>
+                                <div class="status-option flex-fill" data-status="in_progress">
+                                    <i class="fa fa-tools text-primary d-block mb-2 fs-5"></i><span class="small fw-bold">In Progress</span>
+                                </div>
+                                <div class="status-option flex-fill" data-status="resolved">
+                                    <i class="fa fa-circle-check text-success d-block mb-2 fs-5"></i><span class="small fw-bold">Resolved</span>
+                                </div>
+                            </div>
+                            
+                            <div id="resolutionPanel" class="mt-3 p-3 bg-white border border-success border-opacity-25 rounded-3 d-none shadow-sm animation-fade-in">
+                                <div class="modal-section-title text-success"><i class="fa fa-clipboard-check me-1"></i> Resolution Hand-off</div>
+                                
+                                <label class="small fw-bold mb-2 text-dark">Resolution Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control mb-3 bg-light border-0" id="resolutionNotes" rows="2" placeholder="Briefly describe how the issue was fixed..."></textarea>
+                                
+                                <label class="small fw-bold mb-2 text-dark">Tag Assisting Staff Members</label>
+                                <div class="helper-checkbox-list" id="helperStaffList"></div>
+                                <div class="small text-muted mt-2 fw-medium" style="font-size: 0.75rem;">
+                                    <i class="fa fa-info-circle me-1"></i> Tagged helpers will be included in the resident's review request.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-section mb-0">
+                            <div class="modal-section-title"><i class="fa fa-triangle-exclamation me-1 text-danger"></i> Emergency Escalation</div>
+                            <div id="escalationSection"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-danger d-none mt-3 fw-bold border-0" id="modalError"></div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold text-muted border shadow-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow" id="saveStatusBtn">
+                    <i class="fa fa-save me-2"></i>Commit Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token    = localStorage.getItem('aptcare_token');
+    const user     = JSON.parse(localStorage.getItem('aptcare_user') || 'null');
+    
+    if (!token || !user) window.location.href = '{% url "login-page" %}';
+    if (user && user.role === 'user') window.location.href = '{% url "dashboard" %}';
+
+    let allComplaints = [], filteredComplaints = [], allEscalations = [], allStaff = [];
+    let currentPage = 1, selectedStatus = '', currentComplaintId = null;
+    const perPage = 10;
+
+    // ─────────────────────────────────────────
+    // UI: SIDEBAR & SMART HEADER
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    let lastScrollTop = 0;
+    const smartHeader = document.getElementById('smartHeader');
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            smartHeader.classList.add('hide-header');
+        } else {
+            smartHeader.classList.remove('hide-header');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+    }, false);
+
+
+    // ─────────────────────────────────────────
+    // FORMATTERS
+    // ─────────────────────────────────────────
+    function formatDateTime(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleString('en-IN', { 
+            day:'2-digit', month:'short', year:'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true 
+        });
+    }
+
+    function statusBadge(s) {
+        const m = { pending:`<span class="badge-status bg-pending">Pending</span>`, in_progress:`<span class="badge-status bg-in_progress">In Progress</span>`, resolved:`<span class="badge-status bg-resolved">Resolved</span>` };
+        return m[s] || `<span class="badge-status">${s}</span>`;
+    }
+    function priorityDot(l) {
+        return `<span class="priority-dot p-${l}"></span><span class="fw-bold small ms-1 text-dark">${l.charAt(0).toUpperCase()+l.slice(1)}</span>`;
+    }
+    function priorityBadgeHtml(l) {
+        const m = { critical:'<span class="badge rounded-pill" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;">Critical</span>', high:'<span class="badge rounded-pill" style="background:#ffedd5;color:#7c2d12;border:1px solid #fdba74;">High</span>', medium:'<span class="badge rounded-pill" style="background:#fef9c3;color:#713f12;border:1px solid #fde047;">Medium</span>', low:'<span class="badge rounded-pill" style="background:#dcfce7;color:#14532d;border:1px solid #86efac;">Low</span>' };
+        return m[l] || l;
+    }
+
+    // ─────────────────────────────────────────
+    // LOADERS
+    // ─────────────────────────────────────────
+    async function loadCategories() {
+        try {
+            const data = await (await fetch(`${API_BASE}/categories/`, { headers:{ 'Authorization':`Token ${token}` } })).json();
+            const sel  = document.getElementById('category-filter');
+            data.forEach(c => { const o = document.createElement('option'); o.value = c.name; o.textContent = c.name; sel.appendChild(o); });
+        } catch(e) {}
+    }
+
+    async function loadAllStaff() {
+        try {
+            allStaff = await (await fetch(`${API_BASE}/staff/dropdown/`, { headers:{ 'Authorization':`Token ${token}` } })).json();
+        } catch(e) { console.error("Failed to load staff"); }
+    }
+
+    async function loadComplaints() {
+        try {
+            const [cR, eR] = await Promise.all([
+                fetch(`${API_BASE}/complaints/all/`, { headers:{ 'Authorization':`Token ${token}` } }),
+                fetch(`${API_BASE}/escalations/`,    { headers:{ 'Authorization':`Token ${token}` } })
+            ]);
+            if (cR.status === 401) { localStorage.clear(); window.location.href = '{% url "login-page" %}'; return; }
+            allComplaints  = await cR.json();
+            allEscalations = await eR.json();
+            filteredComplaints = [...allComplaints];
+            currentPage = 1;
+            renderTable(); updatePagination();
+        } catch(e) {
+            document.getElementById('complaints-table-body').innerHTML = `<tr><td colspan="8" class="text-center text-danger fw-bold py-5"><i class="fa fa-circle-exclamation me-2"></i>Failed to load complaints. Refresh page.</td></tr>`;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // RENDERING & PAGINATION
+    // ─────────────────────────────────────────
+    function renderTable() {
+        const tbody = document.getElementById('complaints-table-body');
+        const slice = filteredComplaints.slice((currentPage-1)*perPage, currentPage*perPage);
+        
+        if (!slice.length) { 
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted fw-bold"><i class="fa fa-folder-open fa-2x mb-3 d-block opacity-50"></i>No complaints match the selected filters.</td></tr>`; 
+            return; 
+        }
+        
+        tbody.innerHTML = slice.map(c => {
+            const esc = allEscalations.some(e => e.complaint?.id === c.id);
+            
+            // 🔥 Highlight SOS Tickets
+            const isSOS = c.description && c.description.includes('[EMERGENCY SOS]');
+            const rowClass = isSOS ? 'sos-row' : '';
+            const sosBadge = isSOS ? `<span class="badge bg-danger ms-2 shadow-sm pulse-red-badge"><i class="fa fa-siren-on me-1"></i>SOS</span>` : '';
+
+            return `<tr class="${rowClass}">
+                <td class="ps-4 fw-bold text-primary">#CMP-${c.id} ${sosBadge} ${esc ? '<span class="badge bg-danger ms-1 shadow-sm"><i class="fa fa-fire"></i></span>' : ''}</td>
+                <td><div class="fw-bold text-dark">${c.user_name||'—'}</div></td>
+                <td><span class="badge bg-light text-dark border">${c.category_name||'—'}</span></td>
+                <td>${priorityDot(c.priority_level)}</td>
+                <td class="fw-medium">${c.staff_name || '<span class="text-danger small bg-danger bg-opacity-10 px-2 py-1 rounded">Unassigned</span>'}</td>
+                <td>${statusBadge(c.status)}</td>
+                <td class="text-muted small fw-medium">${formatDateTime(c.created_at)}</td>
+                <td class="text-end pe-4"><button class="btn btn-outline-primary bg-light border-0 btn-sm rounded-pill px-3 fw-bold manage-btn shadow-sm" data-id="${c.id}">Manage</button></td>
+            </tr>`;
+        }).join('');
+        document.querySelectorAll('.manage-btn').forEach(b => b.addEventListener('click', function() { openManageModal(parseInt(this.dataset.id)); }));
+    }
+
+    function updatePagination() {
+        const total = filteredComplaints.length, tp = Math.ceil(total/perPage);
+        const s = Math.min(total,(currentPage-1)*perPage+1), e = Math.min(total,currentPage*perPage);
+        document.getElementById('complaints-count').textContent = total ? `Showing ${s}–${e} of ${total} entries` : 'No records found';
+        document.getElementById('current-page').innerHTML = `<a class="page-link border-0 bg-primary text-white fw-bold" href="#">${currentPage}</a>`;
+        document.getElementById('previous-page').classList.toggle('disabled', currentPage===1);
+        document.getElementById('next-page').classList.toggle('disabled', currentPage>=tp||tp===0);
+        document.getElementById('previous-page').onclick = ev => { ev.preventDefault(); if(currentPage>1){currentPage--;renderTable();updatePagination();} };
+        document.getElementById('next-page').onclick     = ev => { ev.preventDefault(); if(currentPage<tp){currentPage++;renderTable();updatePagination();} };
+    }
+
+    // ─────────────────────────────────────────
+    // REAL-TIME AUTO FILTERING
+    // ─────────────────────────────────────────
+    function applyFilters() {
+        const s  = document.getElementById('search-input').value.toLowerCase();
+        const st = document.getElementById('status-filter').value;
+        const p  = document.getElementById('priority-filter').value;
+        const c  = document.getElementById('category-filter').value;
+        const d  = document.getElementById('date-filter').value;
+
+        const now = new Date();
+
+        filteredComplaints = allComplaints.filter(x => {
+            const matchSearch = (!s || `#cmp-${x.id}`.includes(s) || (x.user_name||'').toLowerCase().includes(s) || (x.category_name||'').toLowerCase().includes(s) || (x.location||'').toLowerCase().includes(s));
+            const matchStatus   = (!st || x.status === st);
+            const matchPriority = (!p  || x.priority_level === p);
+            const matchCategory = (!c  || x.category_name === c);
+            
+            let matchDate = true;
+            if (d) {
+                const createdDate = new Date(x.created_at);
+                const diffTime = Math.abs(now - createdDate);
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                
+                if (d === 'today')  matchDate = diffDays <= 1; 
+                if (d === '7days')  matchDate = diffDays <= 7;
+                if (d === '14days') matchDate = diffDays <= 14;
+                if (d === '30days') matchDate = diffDays <= 30;
+            }
+
+            return matchSearch && matchStatus && matchPriority && matchCategory && matchDate;
+        });
+        
+        currentPage = 1; 
+        renderTable(); 
+        updatePagination();
+    }
+
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+    document.getElementById('status-filter').addEventListener('change', applyFilters);
+    document.getElementById('priority-filter').addEventListener('change', applyFilters);
+    document.getElementById('category-filter').addEventListener('change', applyFilters);
+    document.getElementById('date-filter').addEventListener('change', applyFilters);
+
+
+    // ─────────────────────────────────────────
+    // EXPORT
+    // ─────────────────────────────────────────
+    document.getElementById('export-csv-button').addEventListener('click', () => {
+        if (!filteredComplaints.length) { alert('No data to export.'); return; }
+        const h = ['ID','User','Category','Location','Assigned To','Priority','Status','Filed Date'];
+        const r = filteredComplaints.map(c => [`#CMP-${c.id}`,c.user_name||'',c.category_name||'',c.location||'',c.staff_name||'Unassigned',c.priority_level||'',c.status||'',formatDateTime(c.created_at)]);
+        const csv = [h,...r].map(x=>x.map(v=>`"${v}"`).join(',')).join('\n');
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+        a.download=`aptcare_complaints_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+    });
+
+
+    // ─────────────────────────────────────────
+    // MODAL LOGIC & HELPERS
+    // ─────────────────────────────────────────
+    function populateStaffDropdown(currentStaffId) {
+        const sel = document.getElementById('staffDropdown');
+        sel.innerHTML = `<option value="">— Unassigned —</option>`;
+        allStaff.forEach(s => { 
+            const o = document.createElement('option'); 
+            o.value = s.id; 
+            o.textContent = `${s.name} (${s.department})`; 
+            if(s.id === currentStaffId) o.selected = true; 
+            sel.appendChild(o); 
+        });
+    }
+
+    function buildHelperCheckboxes(primaryStaffId) {
+        const list = document.getElementById('helperStaffList');
+        list.innerHTML = '';
+        
+        const availableHelpers = allStaff.filter(s => s.id !== primaryStaffId);
+        
+        if (availableHelpers.length === 0) {
+            list.innerHTML = `<div class="text-muted small p-2 fw-bold">No other staff available to assist.</div>`;
+            return;
+        }
+
+        availableHelpers.forEach(s => {
+            list.innerHTML += `
+                <div class="form-check helper-item ps-4">
+                    <input class="form-check-input helper-cb" type="checkbox" value="${s.name}" id="helper_${s.id}">
+                    <label class="form-check-label text-dark" for="helper_${s.id}">
+                        ${s.name} <span class="text-muted" style="font-size:0.75rem;">(${s.department})</span>
+                    </label>
+                </div>`;
+        });
+    }
+
+    function openManageModal(id) {
+        const c = allComplaints.find(x=>x.id===id); if(!c) return;
+        currentComplaintId = id; selectedStatus = c.status;
+
+        document.getElementById('modalComplaintId').textContent  = `#CMP-${c.id}`;
+        document.getElementById('modalCategory').textContent     = c.category_name||'—';
+        document.getElementById('modalLocation').textContent     = c.location||'—';
+        document.getElementById('modalUser').textContent         = c.user_name||'—';
+        
+        // Clean SOS tag from description for cleaner UI reading
+        document.getElementById('modalDescription').textContent  = c.description ? c.description.replace('[EMERGENCY SOS]:', '').replace('[EMERGENCY SOS]', '').trim() : '—';
+        
+        document.getElementById('modalPriority').innerHTML       = priorityBadgeHtml(c.priority_level);
+        document.getElementById('currentStaffName').textContent  = c.staff_name||'None';
+        
+        // Dates
+        document.getElementById('modalFiledDate').textContent    = formatDateTime(c.created_at);
+        if (c.status === 'resolved') {
+            document.getElementById('modalResolvedDate').textContent = formatDateTime(c.updated_at);
+            document.getElementById('resolvedDateContainer').classList.remove('d-none');
+        } else {
+            document.getElementById('resolvedDateContainer').classList.add('d-none');
+        }
+
+        // Photo
+        const photoContainer = document.getElementById('complaintPhotoContainer');
+        const photoImg = document.getElementById('complaintPhoto');
+        if (c.attachment_url) {
+            photoImg.src = `http://127.0.0.1:8000${c.attachment_url}`;
+            photoContainer.style.display = 'block';
+        } else {
+            photoContainer.style.display = 'none';
+        }
+
+        document.getElementById('modalError').classList.add('d-none');
+
+        // Reset Resolution Panel
+        document.getElementById('resolutionNotes').value = '';
+        document.getElementById('resolutionPanel').classList.add('d-none');
+
+        // Staffing
+        populateStaffDropdown(c.assigned_staff);
+        buildHelperCheckboxes(c.assigned_staff);
+        
+        document.getElementById('staffDropdown').addEventListener('change', function() {
+            buildHelperCheckboxes(parseInt(this.value));
+        });
+
+        document.querySelectorAll('.status-option').forEach(o => o.classList.toggle('selected', o.dataset.status===c.status));
+
+        // Escalation
+        const isEsc = allEscalations.some(e => e.complaint?.id === c.id);
+        const sec   = document.getElementById('escalationSection');
+
+        if (c.status === 'resolved') {
+            sec.innerHTML = `<div class="text-success small fw-bold"><i class="fa fa-circle-check me-2 fs-5 align-middle"></i>Complaint is resolved. No escalation needed.</div>`;
+        } else if (isEsc) {
+            sec.innerHTML = `<div class="escalated-tag shadow-sm"><i class="fa fa-fire text-danger me-2"></i>This ticket has already been escalated to management.</div>`;
+        } else {
+            sec.innerHTML = `
+                <button class="btn-escalate" id="escalateBtn">
+                    <i class="fa fa-triangle-exclamation me-2"></i>Trigger Emergency Escalation
+                </button>
+                <div class="mt-3">
+                    <input type="text" class="form-control bg-light" id="escalateReason" placeholder="Reason for escalation (optional)">
+                </div>`;
+            document.getElementById('escalateBtn').addEventListener('click', handleEscalate);
+        }
+
+        new bootstrap.Modal(document.getElementById('manageModal')).show();
+    }
+
+    document.querySelectorAll('.status-option').forEach(o => {
+        o.addEventListener('click', function() {
+            selectedStatus = this.dataset.status;
+            document.querySelectorAll('.status-option').forEach(x => x.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            if (selectedStatus === 'resolved') {
+                document.getElementById('resolutionPanel').classList.remove('d-none');
+            } else {
+                document.getElementById('resolutionPanel').classList.add('d-none');
+            }
+        });
+    });
+
+    document.getElementById('saveStatusBtn').addEventListener('click', async () => {
+        if (!currentComplaintId) return;
+        const btn = document.getElementById('saveStatusBtn');
+        const staffId = document.getElementById('staffDropdown').value;
+        const errEl = document.getElementById('modalError');
+        
+        if (selectedStatus === 'resolved') {
+            const rawNotes = document.getElementById('resolutionNotes').value.trim();
+            if (!rawNotes) {
+                errEl.innerHTML = "<i class='fa fa-circle-exclamation me-2'></i>Please provide Resolution Notes before closing the ticket.";
+                errEl.classList.remove('d-none');
+                return;
+            }
+        }
+
+        btn.disabled=true; btn.innerHTML=`<span class="spinner-border spinner-border-sm me-2"></span>Committing...`; errEl.classList.add('d-none');
+        
+        try {
+            const payload = { status: selectedStatus };
+
+            const sR = await fetch(`${API_BASE}/complaints/${currentComplaintId}/`, { 
+                method:'PATCH', 
+                headers:{ 'Authorization':`Token ${token}`,'Content-Type':'application/json' }, 
+                body:JSON.stringify(payload) 
+            });
+            if (!sR.ok) throw new Error('Status update failed');
+            
+            if (staffId) {
+                const aR = await fetch(`${API_BASE}/complaints/${currentComplaintId}/assign/`, { 
+                    method:'PATCH', 
+                    headers:{ 'Authorization':`Token ${token}`,'Content-Type':'application/json' }, 
+                    body:JSON.stringify({ staff_id:parseInt(staffId) }) 
+                });
+                if (!aR.ok) throw new Error('Staff assignment failed');
+            }
+            await loadComplaints();
+            bootstrap.Modal.getInstance(document.getElementById('manageModal')).hide();
+        } catch(e) {
+            errEl.innerHTML = `<i class='fa fa-triangle-exclamation me-2'></i>${e.message||'Server error.'}`; 
+            errEl.classList.remove('d-none');
+        }
+        btn.disabled=false; btn.innerHTML=`<i class="fa fa-save me-2"></i>Commit Changes`;
+    });
+
+    async function handleEscalate() {
+        const btn=document.getElementById('escalateBtn'), reason=document.getElementById('escalateReason')?.value.trim()||'Manually escalated by admin.', errEl=document.getElementById('modalError');
+        btn.disabled=true; btn.innerHTML=`<span class="spinner-border spinner-border-sm me-2"></span>Escalating...`; errEl.classList.add('d-none');
+        try {
+            const res  = await fetch(`${API_BASE}/complaints/${currentComplaintId}/escalate/`, { method:'POST', headers:{ 'Authorization':`Token ${token}`,'Content-Type':'application/json' }, body:JSON.stringify({ reason }) });
+            const data = await res.json();
+            if (!res.ok) { errEl.textContent=data.error||'Failed to escalate.'; errEl.classList.remove('d-none'); btn.disabled=false; btn.innerHTML=`<i class="fa fa-triangle-exclamation me-2"></i>Trigger Emergency Escalation`; return; }
+            
+            allEscalations = await (await fetch(`${API_BASE}/escalations/`, { headers:{ 'Authorization':`Token ${token}` } })).json();
+            document.getElementById('escalationSection').innerHTML = `<div class="escalated-tag shadow-sm"><i class="fa fa-fire text-danger me-2"></i>Escalated successfully!</div>`;
+            renderTable();
+        } catch(e) {
+            errEl.textContent='Server error.'; errEl.classList.remove('d-none'); btn.disabled=false; btn.innerHTML=`<i class="fa fa-triangle-exclamation me-2"></i>Trigger Emergency Escalation`;
+        }
+    }
+
+    document.getElementById('signOutBtn').addEventListener('click', async e => {
+        e.preventDefault();
+        try { await fetch(`${API_BASE}/auth/logout/`, { method:'POST', headers:{ 'Authorization':`Token ${token}` } }); } catch(_) {}
+        localStorage.removeItem('aptcare_token');
+        localStorage.removeItem('aptcare_user');
+        window.location.href='{% url "login-page" %}';
+    });
+
+    // Initialize
+    loadCategories();
+    loadAllStaff().then(() => {
+        loadComplaints();
+    });
+</script>
+</body>
+</html>

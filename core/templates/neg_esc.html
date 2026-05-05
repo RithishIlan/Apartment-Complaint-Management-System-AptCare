@@ -1,0 +1,702 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neglect & Escalation | AptCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --accent-light: #eef2ff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+            
+            /* Sidebar Dimensions */
+            --sidebar-width: 260px;
+            --sidebar-shrunk-width: 80px;
+        }
+
+        body { 
+            background-color: var(--primary-bg); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        /* ================= Layout & Sidebar ================= */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            overflow-x: hidden; display: flex; flex-direction: column;
+        }
+
+        #sidebar.shrunk { width: var(--sidebar-shrunk-width); }
+
+        .sidebar-brand {
+            height: 80px; display: flex; align-items: center; padding: 0 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.04); white-space: nowrap; overflow: hidden;
+            text-decoration: none; width: 100%;
+        }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s ease; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        
+        /* Sidebar Padding Fix */
+        #sidebar .nav-item { width: 100%; padding: 0 16px; }
+        #sidebar .mt-auto { width: 100%; }
+        
+        #sidebar .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; 
+            font-weight: 500; white-space: nowrap; overflow: hidden; width: 100%;
+        }
+        #sidebar .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        #sidebar .nav-link:hover { background: var(--accent-light); color: var(--accent-color); }
+        #sidebar .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; min-width: 100%; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 34px; height: 34px; }
+        
+        #sidebar.shrunk .nav-item { padding: 0 14px; }
+        #sidebar.shrunk .nav-link { padding: 14px 0; justify-content: center; margin: 0; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        /* ================= Main Content Area ================= */
+        #content { 
+            width: 100%; margin-left: var(--sidebar-width); 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        #content.expanded { margin-left: var(--sidebar-shrunk-width); }
+        .content-inner { padding: 0 30px 30px 30px; flex-grow: 1; }
+
+        /* ================= Smart Floating Header ================= */
+        .header-wrapper {
+            position: sticky; top: 0; z-index: 900;
+            padding-top: 20px; padding-bottom: 20px;
+            background: var(--primary-bg); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .header-wrapper.hide-header { transform: translateY(-100%); }
+
+        .top-header {
+            background: #ffffff; border-radius: 20px; padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); transition: all 0.2s; cursor: pointer; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* ================= Cards & Stats ================= */
+        .stat-card { border: none; border-radius: 20px; transition: transform 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.03); background: #ffffff; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+        
+        .table-card { background: #ffffff; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: none; }
+        .table thead th { background: transparent; color: var(--gray-text); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f4f7fe; padding: 16px 24px; }
+        .table tbody td { padding: 16px 24px; vertical-align: middle; border-bottom: 1px solid #f4f7fe; color: var(--dark-text); font-weight: 500; font-size: 0.9rem; }
+
+        /* Custom Tabs */
+        .custom-tabs { background: #ffffff; padding: 6px; border-radius: 50px; display: inline-flex; flex-direction: row; gap: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #eef1fd; }
+        .custom-tabs .nav-item { width: auto; padding: 0; }
+        .custom-tabs .nav-link { color: var(--gray-text); font-weight: 700; padding: 10px 24px; border-radius: 50px; transition: 0.2s; border: none; background: transparent; margin: 0; width: auto; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;}
+        .custom-tabs .nav-link:hover { color: var(--dark-text); background: #f8faff; }
+        .custom-tabs .nav-link.active { color: #ffffff; background: var(--accent-color); box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2); }
+
+        /* Badges & Tags */
+        .avatar-sm { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+        .progress-slim { height: 6px; border-radius: 10px; background: #eef1fd; }
+        .row-resolved { opacity: 0.5; }
+        .row-resolved td { text-decoration: line-through; }
+        
+        /* Drawer */
+        .offcanvas { border-top-left-radius: 24px; border-bottom-left-radius: 24px; border: none; box-shadow: -10px 0 30px rgba(0,0,0,0.05); }
+
+        /* Skeleton */
+        .skeleton { background: linear-gradient(90deg,#e8e8e8 25%,#f5f5f5 50%,#e8e8e8 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 6px; display: inline-block; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        <ul class="nav sidebar-nav">
+            <li class="nav-item"><a class="nav-link" href="{% url 'admin-dashboard-page' %}"><i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'all-complaints' %}"><i class="fa fa-list-check"></i> <span class="nav-text">All Complaints</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{% url 'neg-esc-page' %}"><i class="fa fa-triangle-exclamation"></i> <span class="nav-text">Neglect & Escalation</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'analytics' %}"><i class="fa fa-chart-pie"></i> <span class="nav-text">Analytics & Reports</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'staff-performance-page' %}"><i class="fa fa-user-tie"></i> <span class="nav-text">Staff Performance</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'resident-manage-page' %}"><i class="fa fa-users"></i> <span class="nav-text">Resident Management</span></a></li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item"><a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;"><i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span></a></li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+
+        <div class="header-wrapper" id="smartHeader">
+            <div class="content-inner pb-0">
+                <header class="top-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="sidebarToggle" class="toggle-btn shadow-sm"><i class="fas fa-bars"></i></button>
+                        <div>
+                            <h1 class="header-title">Neglect & Escalation Monitor</h1>
+                            <p class="text-muted small mb-0 d-none d-md-block">Track and resolve SLA breaches and critical interventions.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary shadow-sm rounded-pill px-4 fw-bold" id="exportBtn">
+                        <i class="fa fa-download me-2"></i>Export CSV
+                    </button>
+                </header>
+            </div>
+        </div>
+
+        <div class="content-inner pt-2">
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-danger border-5 h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Overdue (Unresolved)</h6>
+                                <h2 class="fw-bolder mb-0 text-danger" id="kpiOverdue"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-clock fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-warning border-5 h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Active Escalations</h6>
+                                <h2 class="fw-bolder mb-0 text-dark" id="kpiTotal"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-rotate-right fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-primary border-5 h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Critical Open</h6>
+                                <h2 class="fw-bolder mb-0 text-primary" id="kpiCritical"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-radiation fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card p-4 border-start border-success border-5 h-100">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="text-muted small mb-1 fw-bold text-uppercase">Resolved (Cleared)</h6>
+                                <h2 class="fw-bolder mb-0 text-dark" id="kpiResolved"><span class="skeleton" style="width:40px;height:28px;"></span></h2>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded-3">
+                                <i class="fa fa-circle-check fa-2x text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <ul class="nav custom-tabs" id="pills-tab">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-tab="active">
+                            Active Issues
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-tab="overdue">
+                            Overdue <span class="badge bg-danger ms-2" id="tabOverdueBadge">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-tab="critical">
+                            Critical <span class="badge bg-warning text-dark ms-2" id="tabCriticalBadge">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-tab="resolved">
+                            Resolved <span class="badge bg-success ms-2" id="tabResolvedBadge">0</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card table-card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Ticket Details</th>
+                                <th>Responsible Staff</th>
+                                <th>SLA Status</th>
+                                <th>Priority</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="escalationTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                                    <span class="text-muted fw-bold">Loading escalations...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="ticketDrawer" style="width: 420px;">
+    <div class="offcanvas-header bg-white border-bottom p-4">
+        <h5 class="offcanvas-title fw-bold text-dark" id="drawerTitle">Ticket Details</h5>
+        <button type="button" class="btn-close bg-light rounded-circle p-2" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4 bg-light">
+        <div class="alert border-0 shadow-sm d-flex align-items-center small mb-4 fw-bold" id="drawerAlert">
+            <i class="fa fa-triangle-exclamation me-2 fs-5"></i>
+            <span id="drawerAlertText">This ticket requires attention.</span>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4 rounded-4">
+            <h6 class="fw-bold mb-3 text-dark border-bottom pb-2">Complaint Details</h6>
+            <p class="small mb-2"><strong>Category:</strong> <span id="drawerCategory" class="ms-1">—</span></p>
+            <p class="small mb-2"><strong>Location:</strong> <span id="drawerLocation" class="ms-1">—</span></p>
+            <p class="small mb-2"><strong>Filed by:</strong> <span id="drawerUser" class="ms-1 fw-bold text-dark">—</span></p>
+            <p class="small mb-0 text-muted lh-base mt-3"><strong class="text-dark d-block mb-1">Description:</strong> <span id="drawerDescription">—</span></p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4 rounded-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <span class="fw-bold text-dark small">Assigned Staff</span>
+                <span class="fw-bold text-dark small">Priority</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary" id="drawerStaff">—</span>
+                <span id="drawerPriority">—</span>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4 rounded-4">
+            <h6 class="fw-bold mb-2 text-dark">SLA Tracker</h6>
+            <p class="small text-muted mb-3" id="drawerDeadline">—</p>
+            <h6 class="fw-bold mb-2 text-dark">Current Status</h6>
+            <p class="small mb-0 fw-bold" id="drawerStatus">—</p>
+        </div>
+
+        <div class="d-grid gap-2 mt-4" id="drawerActions">
+            </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ─────────────────────────────────────────
+    // CONFIG & AUTH GUARD
+    // ─────────────────────────────────────────
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token    = localStorage.getItem('aptcare_token');
+    const user     = JSON.parse(localStorage.getItem('aptcare_user') || 'null');
+    
+    if (!token || !user) window.location.href = '{% url "login-page" %}';
+    if (user && user.role === 'user') window.location.href = '{% url "dashboard" %}';
+
+    // ─────────────────────────────────────────
+    // UI: SIDEBAR & SMART HEADER
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    let lastScrollTop = 0;
+    const smartHeader = document.getElementById('smartHeader');
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            smartHeader.classList.add('hide-header');
+        } else {
+            smartHeader.classList.remove('hide-header');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+    }, false);
+
+    // ─────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────
+    let allEscalations = [];
+    let allComplaints  = [];
+    let activeTab      = 'active';
+
+    // ─────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        return new Date(dateStr).toLocaleString('en-IN', {
+            day:'2-digit', month:'short', year:'numeric',
+            hour:'2-digit', minute:'2-digit'
+        });
+    }
+
+    function getInitials(name) {
+        if (!name) return 'NA';
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+    }
+
+    function priorityBadge(level) {
+        const map = {
+            critical : '<span class="badge rounded-pill" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;">Critical</span>',
+            high     : '<span class="badge rounded-pill" style="background:#ffedd5;color:#7c2d12;border:1px solid #fdba74;">High</span>',
+            medium   : '<span class="badge rounded-pill" style="background:#fef9c3;color:#713f12;border:1px solid #fde047;">Medium</span>',
+            low      : '<span class="badge rounded-pill" style="background:#dcfce7;color:#14532d;border:1px solid #86efac;">Low</span>'
+        };
+        return map[level] || `<span class="badge bg-secondary rounded-pill">${level?.toUpperCase() || '—'}</span>`;
+    }
+
+    function isOverdue(deadline) {
+        return new Date(deadline) < new Date();
+    }
+
+    function activeEscalations() {
+        return allEscalations.filter(e => e.complaint?.status !== 'resolved');
+    }
+    function resolvedEscalations() {
+        return allEscalations.filter(e => e.complaint?.status === 'resolved');
+    }
+
+    // ─────────────────────────────────────────
+    // LOAD DATA
+    // ─────────────────────────────────────────
+    async function apiFetch(endpoint) {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            headers: { 'Authorization': `Token ${token}` }
+        });
+        if (res.status === 401) { localStorage.clear(); window.location.href = '{% url "login-page" %}'; }
+        return res.json();
+    }
+
+    async function loadData() {
+        try {
+            const [escalations, complaints] = await Promise.all([
+                apiFetch('/escalations/'),
+                apiFetch('/complaints/all/')
+            ]);
+            allEscalations = escalations;
+            allComplaints  = complaints;
+            updateKPIs();
+            renderTable(activeTab);
+        } catch (err) {
+            document.getElementById('escalationTableBody').innerHTML = `
+                <tr><td colspan="5" class="text-center text-danger py-5 fw-bold">
+                    <i class="fa fa-circle-exclamation me-2"></i>Failed to load data. Refresh page.
+                </td></tr>`;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // KPI CARDS 
+    // ─────────────────────────────────────────
+    function updateKPIs() {
+        const active   = activeEscalations();
+        const resolved = resolvedEscalations();
+
+        const overdueCount  = active.filter(e => isOverdue(e.sla_deadline)).length;
+        const criticalCount = allComplaints.filter(c => c.priority_level === 'critical' && c.status !== 'resolved').length;
+
+        document.getElementById('kpiOverdue').textContent    = overdueCount;
+        document.getElementById('kpiTotal').textContent      = active.length;
+        document.getElementById('kpiCritical').textContent   = criticalCount;
+        document.getElementById('kpiResolved').textContent   = resolved.length;
+
+        document.getElementById('tabOverdueBadge').textContent  = overdueCount;
+        document.getElementById('tabCriticalBadge').textContent = criticalCount;
+        document.getElementById('tabResolvedBadge').textContent = resolved.length;
+    }
+
+    // ─────────────────────────────────────────
+    // RENDER TABLE
+    // ─────────────────────────────────────────
+    function renderTable(tab) {
+        const tbody = document.getElementById('escalationTableBody');
+        let rows = [];
+
+        if (tab === 'active') {
+            rows = activeEscalations().map(esc => buildEscalationRow(esc));
+        } else if (tab === 'overdue') {
+            rows = activeEscalations().filter(e => isOverdue(e.sla_deadline)).map(esc => buildEscalationRow(esc));
+        } else if (tab === 'critical') {
+            const criticals = allComplaints.filter(c => c.priority_level === 'critical' && c.status !== 'resolved');
+            rows = criticals.map(c => buildCriticalRow(c));
+        } else if (tab === 'resolved') {
+            rows = resolvedEscalations().map(esc => buildResolvedRow(esc));
+        }
+
+        if (!rows.length) {
+            tbody.innerHTML = `
+                <tr><td colspan="5" class="text-center py-5 text-muted fw-bold">
+                    <i class="fa fa-folder-open fa-2x mb-3 d-block opacity-50"></i>
+                    ${tab === 'resolved' ? 'No resolved escalations yet.' : 'System clear. No active issues in this category. ✅'}
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = rows.join('');
+        attachDrawerListeners();
+    }
+
+    // ─────────────────────────────────────────
+    // ROW BUILDERS
+    // ─────────────────────────────────────────
+    function buildEscalationRow(esc) {
+        const c        = esc.complaint;
+        const overdue  = isOverdue(esc.sla_deadline);
+        const icon     = overdue ? `<span class="badge bg-danger bg-opacity-10 text-danger p-2 rounded-3 shadow-sm border border-danger border-opacity-25"><i class="fa fa-fire fs-6"></i></span>` : `<span class="badge bg-warning bg-opacity-10 text-warning p-2 rounded-3 shadow-sm border border-warning border-opacity-25"><i class="fa fa-clock fs-6"></i></span>`;
+        const slaText  = overdue ? `<span class="small fw-bold text-danger">OVERDUE</span>` : `<span class="small fw-bold text-warning">Due Soon</span>`;
+        const initials = getInitials(c.staff_name || 'UN');
+
+        return `
+            <tr>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center open-drawer" style="cursor:pointer;" data-esc-id="${esc.id}" data-cmp-id="${c.id}">
+                        <div class="me-3">${icon}</div>
+                        <div>
+                            <div class="fw-bold text-primary">#CMP-${c.id}</div>
+                            <div class="small fw-bold text-dark mt-1">${c.category_name||'—'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-3 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">${initials}</div>
+                        <div>
+                            <div class="small fw-bold text-dark">${c.staff_name||'<span class="text-danger">Unassigned</span>'}</div>
+                            <div class="small text-muted" style="font-size:0.75rem;">Assigned Staff</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center mb-1">
+                        <div class="progress progress-slim me-2 flex-grow-1" style="max-width: 80px;">
+                            <div class="progress-bar ${overdue?'bg-danger':'bg-warning'}" style="width:${overdue?'100':'70'}%"></div>
+                        </div>
+                        ${slaText}
+                    </div>
+                    <div class="small text-muted fw-medium" style="font-size:0.75rem;">
+                        <i class="fa fa-calendar-alt me-1"></i>${formatDate(esc.sla_deadline)}
+                    </div>
+                </td>
+                <td>${priorityBadge(c.priority_level)}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-primary bg-light border-0 rounded-pill px-4 fw-bold shadow-sm open-drawer" data-esc-id="${esc.id}" data-cmp-id="${c.id}">Details</button>
+                </td>
+            </tr>`;
+    }
+
+    function buildCriticalRow(c) {
+        const initials = getInitials(c.staff_name || 'UN');
+        return `
+            <tr>
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge bg-danger bg-opacity-10 text-danger p-2 rounded-3 shadow-sm border border-danger border-opacity-25"><i class="fa fa-radiation fs-6"></i></span>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-primary">#CMP-${c.id}</div>
+                            <div class="small fw-bold text-dark mt-1">${c.category_name||'—'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm me-3 bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">${initials}</div>
+                        <div>
+                            <div class="small fw-bold text-dark">${c.staff_name||'<span class="text-danger">Unassigned</span>'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 small px-2 py-1">Critical Priority</span>
+                </td>
+                <td>${priorityBadge(c.priority_level)}</td>
+                <td class="text-end pe-4">
+                    <a href="{% url 'all-complaints' %}" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm">Manage</a>
+                </td>
+            </tr>`;
+    }
+
+    function buildResolvedRow(esc) {
+        const c = esc.complaint;
+        return `
+            <tr class="row-resolved">
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge bg-success bg-opacity-10 text-success p-2 rounded-3 border border-success border-opacity-25"><i class="fa fa-check fs-6"></i></span>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-muted">#CMP-${c.id}</div>
+                            <div class="small fw-bold mt-1">${c.category_name||'—'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="small fw-bold text-muted">${c.staff_name||'—'}</div></td>
+                <td>
+                    <span class="small text-success fw-bold"><i class="fa fa-circle-check me-1"></i>SLA Cleared</span>
+                </td>
+                <td>${priorityBadge(c.priority_level)}</td>
+                <td class="text-end pe-4"><span class="badge bg-success rounded-pill px-3">RESOLVED</span></td>
+            </tr>`;
+    }
+
+    // ─────────────────────────────────────────
+    // DRAWER
+    // ─────────────────────────────────────────
+    function attachDrawerListeners() {
+        document.querySelectorAll('.open-drawer').forEach(el => {
+            el.addEventListener('click', function() {
+                const escId = this.dataset.escId;
+                const cmpId = parseInt(this.dataset.cmpId);
+                const esc   = allEscalations.find(e => e.id == escId);
+                const c     = esc ? esc.complaint : allComplaints.find(x => x.id === cmpId);
+                if (!c) return;
+
+                const overdue   = esc ? isOverdue(esc.sla_deadline) : false;
+                const isResolved = c.status === 'resolved';
+
+                const alertEl = document.getElementById('drawerAlert');
+                if (isResolved) {
+                    alertEl.className = 'alert alert-success d-flex align-items-center small mb-4 fw-bold border-0 shadow-sm';
+                    document.getElementById('drawerAlertText').textContent = 'This complaint has been resolved. Escalation cleared.';
+                } else if (overdue) {
+                    alertEl.className = 'alert alert-danger d-flex align-items-center small mb-4 fw-bold border-0 shadow-sm';
+                    document.getElementById('drawerAlertText').textContent = 'This ticket is OVERDUE. Immediate action required.';
+                } else {
+                    alertEl.className = 'alert alert-warning d-flex align-items-center small mb-4 fw-bold border-0 shadow-sm text-dark';
+                    document.getElementById('drawerAlertText').textContent = 'This ticket is approaching its SLA deadline.';
+                }
+
+                document.getElementById('drawerTitle').textContent       = `#CMP-${c.id} Details`;
+                document.getElementById('drawerCategory').textContent    = c.category_name  || '—';
+                document.getElementById('drawerLocation').textContent    = c.location       || '—';
+                document.getElementById('drawerUser').textContent        = c.user_name      || '—';
+                document.getElementById('drawerDescription').textContent = c.description    || '—';
+                document.getElementById('drawerStaff').textContent       = c.staff_name     || 'Unassigned';
+                document.getElementById('drawerDeadline').textContent    = esc ? formatDate(esc.sla_deadline) : '—';
+                document.getElementById('drawerPriority').innerHTML      = priorityBadge(c.priority_level);
+
+                const statusMap = { pending:'<span class="text-warning"><i class="fa fa-hourglass-half me-1"></i> Pending</span>', in_progress:'<span class="text-primary"><i class="fa fa-tools me-1"></i> In Progress</span>', resolved:'<span class="text-success"><i class="fa fa-check-circle me-1"></i> Resolved</span>' };
+                document.getElementById('drawerStatus').innerHTML = statusMap[c.status] || c.status;
+
+                const actions = document.getElementById('drawerActions');
+                if (isResolved) {
+                    actions.innerHTML = `<button class="btn btn-light border rounded-pill fw-bold text-muted shadow-sm py-2" data-bs-dismiss="offcanvas">Close Drawer</button>`;
+                } else {
+                    actions.innerHTML = `
+                        <a href="{% url 'all-complaints' %}" class="btn btn-primary rounded-pill fw-bold shadow py-2 mb-2">
+                            <i class="fa fa-wrench me-2"></i>Take Action
+                        </a>
+                        <button class="btn btn-light border rounded-pill fw-bold text-muted shadow-sm py-2" data-bs-dismiss="offcanvas">Close Drawer</button>`;
+                }
+
+                new bootstrap.Offcanvas(document.getElementById('ticketDrawer')).show();
+            });
+        });
+    }
+
+    // ─────────────────────────────────────────
+    // TAB SWITCHING
+    // ─────────────────────────────────────────
+    document.querySelectorAll('#pills-tab button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#pills-tab button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            activeTab = this.dataset.tab;
+            renderTable(activeTab);
+        });
+    });
+
+    // ─────────────────────────────────────────
+    // EXPORT CSV
+    // ─────────────────────────────────────────
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        const data = activeEscalations();
+        if (!data.length) { alert('No active escalation data to export.'); return; }
+        const headers = ['ID','Category','Location','Priority','Staff','SLA Deadline','Status'];
+        const rows    = data.map(e => {
+            const c = e.complaint;
+            return [`#CMP-${c.id}`, c.category_name||'', c.location||'',
+                    c.priority_level||'', c.staff_name||'Unassigned',
+                    formatDate(e.sla_deadline), c.status||''];
+        });
+        const csv  = [headers,...rows].map(r => r.map(v=>`"${v}"`).join(',')).join('\n');
+        const blob = new Blob([csv],{type:'text/csv'});
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href=url; a.download=`escalations_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click(); URL.revokeObjectURL(url);
+    });
+
+    // ─────────────────────────────────────────
+    // SIGN OUT
+    // ─────────────────────────────────────────
+    document.getElementById('signOutBtn').addEventListener('click', async e => {
+        e.preventDefault();
+        try { await fetch(`${API_BASE}/auth/logout/`, { method:'POST', headers:{ 'Authorization':`Token ${token}` } }); } catch(_) {}
+        localStorage.clear(); window.location.href = '{% url "login-page" %}';
+    });
+
+    // ─────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────
+    loadData();
+    setInterval(loadData, 60000); // auto-refresh every 60s
+</script>
+</body>
+</html>

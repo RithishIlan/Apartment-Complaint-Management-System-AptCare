@@ -1,0 +1,318 @@
+<div id="aptcare-chatbot" class="chatbot-container">
+    <div class="chat-header">
+        <div class="d-flex align-items-center">
+            <div class="engineer-icon me-2">👷‍♂️🤖</div>
+            <div>
+                <h6 class="mb-0 text-white fw-bold">AptCare Engineer</h6>
+                <small style="color: #eef1fd; font-size: 0.75rem;">Online & Ready to Fix! 🔧</small>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+            <button id="langToggleBtn" class="lang-btn">EN</button>
+            <button id="closeChatBtn" class="btn text-white p-0"><i class="fa fa-times"></i></button>
+        </div>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="chat-message bot-message">
+            Hi! 👋 I'm your AptCare Engineer Robot. I can speak English and தமிழ்!<br><br>
+            I can help you file complaints, check your status, or even answer general questions. What do you need today? ✨
+        </div>
+    </div>
+    <div class="chat-footer">
+        <input type="text" id="chatInput" placeholder="Ask me anything..." autocomplete="off">
+        <button id="sendChatBtn"><i class="fa fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div class="chat-toggle-wrapper">
+    <div class="chat-tooltip">Need help? I'm here! If you have any queries, just ask. ✨</div>
+    <button id="chatToggleBtn" class="chat-toggle-btn">
+        <i class="fa fa-comment-dots"></i>
+    </button>
+</div>
+
+<style>
+    /* Toggle Wrapper & Button */
+    .chat-toggle-wrapper {
+        position: fixed; 
+        bottom: 30px; 
+        right: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .chat-toggle-btn {
+        width: 65px; height: 65px; border-radius: 50%;
+        background: linear-gradient(135deg, #4361ee 0%, #2ec4b6 100%);
+        color: white; border: none; box-shadow: 0 4px 15px rgba(67,97,238,0.4);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size: 28px;
+    }
+    .chat-toggle-btn:hover { transform: scale(1.1) rotate(-5deg); }
+
+    /* The Hover Tooltip Bubble */
+    .chat-tooltip {
+        background: #1a1d28;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        margin-bottom: 15px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        white-space: nowrap;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        pointer-events: none;
+    }
+    
+    .chat-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        right: 25px;
+        border-width: 6px;
+        border-style: solid;
+        border-color: #1a1d28 transparent transparent transparent;
+    }
+    
+    .chat-toggle-wrapper:hover .chat-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    /* Chatbot Window Styles */
+    .chatbot-container {
+        position: fixed; bottom: 110px; right: 30px;
+        width: 360px; height: 500px; background: #fff;
+        border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        display: none; flex-direction: column; overflow: hidden;
+        z-index: 9999; border: 1px solid #eef1fd;
+        animation: slideUp 0.3s ease-out;
+    }
+    .chatbot-container.active { display: flex; }
+    
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .chat-header {
+        background: linear-gradient(135deg, #4361ee 0%, #3451d1 100%); color: white;
+        padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .engineer-icon { font-size: 1.5rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    
+    .lang-btn {
+        background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+        color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem;
+        font-weight: bold; cursor: pointer; transition: all 0.2s;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .chat-body {
+        flex: 1; padding: 20px; overflow-y: auto; background: #f8faff;
+        display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth;
+    }
+    
+    .chat-message {
+        max-width: 85%; padding: 12px 16px; border-radius: 16px;
+        font-size: 0.9rem; line-height: 1.5; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .bot-message {
+        background: #fff; border: 1px solid #e8edff; color: #1a1d28;
+        align-self: flex-start; border-bottom-left-radius: 4px;
+        box-shadow: 0 4px 10px rgba(67,97,238,0.05);
+    }
+    .user-message {
+        background: #4361ee; color: white;
+        align-self: flex-end; border-bottom-right-radius: 4px;
+        box-shadow: 0 4px 10px rgba(67,97,238,0.2);
+    }
+    
+    .chat-footer {
+        padding: 15px; border-top: 1px solid #e8edff; background: #fff;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .chat-footer input {
+        flex: 1; padding: 12px 18px; border: 2px solid #eef1fd;
+        border-radius: 50px; outline: none; font-size: 0.9rem;
+        transition: border-color 0.2s; background: #f8faff;
+    }
+    .chat-footer input:focus { border-color: #4361ee; background: #fff; }
+    .chat-footer button {
+        background: #4361ee; color: white; border: none;
+        width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
+        display: flex; justify-content: center; align-items: center;
+        transition: transform 0.2s, background 0.2s;
+    }
+    .chat-footer button:hover { transform: scale(1.05); background: #3451d1; }
+</style>
+
+<script>
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    const chatbotContainer = document.getElementById('aptcare-chatbot');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    const langToggleBtn = document.getElementById('langToggleBtn');
+    const chatBody = document.getElementById('chatBody');
+    const chatInput = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChatBtn');
+
+    // State Variables
+    let currentLanguage = 'English';
+
+    // Toggle Window
+    chatToggleBtn.addEventListener('click', () => chatbotContainer.classList.add('active'));
+    closeChatBtn.addEventListener('click', () => chatbotContainer.classList.remove('active'));
+
+    // Toggle Language
+    langToggleBtn.addEventListener('click', () => {
+        if (currentLanguage === 'English') {
+            currentLanguage = 'Tamil';
+            langToggleBtn.textContent = 'தமிழ்';
+            addMessage("நான் இப்போது தமிழில் பேசுகிறேன்! உங்களுக்கு எப்படி உதவலாம்? 🛠️", 'bot');
+        } else {
+            currentLanguage = 'English';
+            langToggleBtn.textContent = 'EN';
+            addMessage("Switched to English! How can I assist you today? 🛠️", 'bot');
+        }
+    });
+
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-message ${sender}-message`;
+        msgDiv.innerHTML = text;
+        chatBody.appendChild(msgDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function handleSend() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        
+        addMessage(text, 'user');
+        chatInput.value = '';
+
+        const typingId = 'typing-' + Date.now();
+        const typingDiv = document.createElement('div');
+        typingDiv.className = `chat-message bot-message text-muted`;
+        typingDiv.id = typingId;
+        typingDiv.innerHTML = `<small><i>Let me check my toolbox... 🧰</i></small>`;
+        chatBody.appendChild(typingDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        try {
+            const userToken = localStorage.getItem('aptcare_token');
+            const response = await fetch('/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${userToken}`
+                },
+                // Send BOTH the message and the current language preference
+                body: JSON.stringify({ 
+                    message: text,
+                    language: currentLanguage
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById(typingId).remove();
+            
+            if (response.ok) {
+                addMessage(data.reply, 'bot');
+            } else {
+                addMessage("Oops! Dropped my wrench. 🔧 Please try again.", 'bot');
+            }
+
+        } catch (error) {
+            document.getElementById(typingId).remove();
+            addMessage("Network error. 📡 Check your Wi-Fi!", 'bot');
+        }
+    }
+
+    sendChatBtn.addEventListener('click', handleSend);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSend();
+    });
+    // ─────────────────────────────────────────
+    // DRAGGABLE CHATBOT LOGIC
+    // ─────────────────────────────────────────
+    const chatBtn = document.getElementById('chatToggleBtn'); // ⚠️ Change this ID!
+    
+    let isDragging = false;
+    let currentX, currentY, initialX, initialY;
+    let xOffset = 0, yOffset = 0;
+    let dragStarted = false;
+
+    // Desktop Mouse Events
+    chatBtn.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Mobile Touch Events
+    chatBtn.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', dragEnd);
+
+    function dragStart(e) {
+        if (e.type === 'touchstart') {
+            initialX = e.touches[0].clientX - xOffset;
+            initialY = e.touches[0].clientY - yOffset;
+        } else {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+        }
+
+        if (e.target === chatBtn || chatBtn.contains(e.target)) {
+            isDragging = true;
+            dragStarted = false; // Reset drag check
+            chatBtn.style.transition = 'none'; // Remove transition for smooth tracking
+        }
+    }
+
+    function drag(e) {
+        if (!isDragging) return;
+        
+        e.preventDefault(); // Prevents screen scroll on mobile while dragging
+        dragStarted = true; // Marks that we are actually moving, not just clicking
+
+        if (e.type === 'touchmove') {
+            currentX = e.touches[0].clientX - initialX;
+            currentY = e.touches[0].clientY - initialY;
+        } else {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        // Apply the new position using CSS Transform (smoothest performance)
+        chatBtn.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+    }
+
+    function dragEnd(e) {
+        if (!isDragging) return;
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+        chatBtn.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1)';
+    }
+
+    // Prevent chat from opening if the user was just dragging it
+    chatBtn.addEventListener('click', function(e) {
+        if (dragStarted) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragStarted = false;
+        }
+    });
+</script>

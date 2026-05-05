@@ -1,0 +1,750 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Complaints | AptCare User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --accent-light: #eef2ff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+            
+            /* Sidebar Dimensions */
+            --sidebar-width: 260px;
+            --sidebar-shrunk-width: 80px;
+        }
+        
+        body { 
+            background-color: var(--primary-bg); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        /* ================= Layout & Sidebar ================= */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            overflow-x: hidden; display: flex; flex-direction: column;
+        }
+
+        #sidebar.shrunk { width: var(--sidebar-shrunk-width); }
+
+        .sidebar-brand {
+            height: 80px; display: flex; align-items: center; padding: 0 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.04); white-space: nowrap; overflow: hidden;
+            text-decoration: none; width: 100%;
+        }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s ease; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        
+        #sidebar .nav-item { width: 100%; padding: 0 16px; }
+        #sidebar .mt-auto { width: 100%; }
+        
+        #sidebar .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; 
+            font-weight: 500; white-space: nowrap; overflow: hidden; width: 100%;
+        }
+        #sidebar .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        #sidebar .nav-link:hover { background: var(--accent-light); color: var(--accent-color); }
+        #sidebar .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; min-width: 100%; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 34px; height: 34px; }
+        
+        #sidebar.shrunk .nav-item { padding: 0 14px; }
+        #sidebar.shrunk .nav-link { padding: 14px 0; justify-content: center; margin: 0; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        /* ================= Main Content Area ================= */
+        #content { 
+            width: 100%; margin-left: var(--sidebar-width); 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        #content.expanded { margin-left: var(--sidebar-shrunk-width); }
+        .content-inner { padding: 30px; flex-grow: 1; }
+
+        /* ================= Smart Floating Header ================= */
+        .header-wrapper {
+            position: sticky; top: 0; z-index: 900;
+            padding-top: 20px; padding-bottom: 20px;
+            background: var(--primary-bg); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .header-wrapper.hide-header { transform: translateY(-100%); }
+
+        .top-header {
+            background: #ffffff; border-radius: 20px; padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); transition: all 0.2s; cursor: pointer; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* ================= Cards & Filters ================= */
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: transform 0.2s, box-shadow 0.2s; background: #ffffff; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+        
+        .form-select-pill { border-radius: 50px; border: 2px solid #eef1fd; background: #f8faff; transition: 0.2s; padding: 0.5rem 2.25rem 0.5rem 1.25rem; font-weight: 600; color: var(--dark-text); }
+        .form-select-pill:focus { background: white; box-shadow: 0 0 0 4px rgba(67,97,238,0.1); border-color: var(--accent-color); }
+
+        /* Status & Priority Badges */
+        .badge-status { padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;}
+        .status-resolved    { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;}
+        .status-in_progress { background: #eef2ff; color: #4361ee; border: 1px solid #c7d2fe;}
+        .status-pending     { background: #fff4e5; color: #e65100; border: 1px solid #ffe0b2;}
+
+        .pri-critical { background:#fee2e2; color:#7f1d1d; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; border: 1px solid #fca5a5;}
+        .pri-high     { background:#ffedd5; color:#7c2d12; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; border: 1px solid #fdba74;}
+        .pri-medium   { background:#fef9c3; color:#713f12; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; border: 1px solid #fde047;}
+        .pri-low      { background:#dcfce7; color:#14532d; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; border: 1px solid #86efac;}
+
+        /* ================= Horizontal Timeline ================= */
+        .timeline-steps { display: flex; justify-content: space-between; position: relative; margin-top: 30px; padding: 0 10px; }
+        .timeline-steps::before { content: ""; position: absolute; top: 15px; left: 20px; right: 20px; height: 3px; background: #eef1fd; z-index: 1; }
+        .step { position: relative; z-index: 2; text-align: center; width: 25%; }
+        .step-icon {
+            width: 36px; height: 36px; background: #fff; border: 3px solid #eef1fd; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 0.9rem; color: #a3aed1; transition: all 0.3s;
+        }
+        .step-label { font-size: 0.75rem; font-weight: 800; color: var(--gray-text); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .step-desc  { font-size: 0.7rem; color: #9ca3af; font-weight: 600; line-height: 1.2; }
+        
+        .step.completed .step-icon  { background: #28a745; border-color: #28a745; color: #fff; }
+        .step.completed .step-label { color: #28a745; }
+        .step.active .step-icon  { border-color: var(--accent-color); color: var(--accent-color); background: #fff; box-shadow: 0 0 0 4px rgba(67,97,238,0.15); transform: scale(1.15); }
+        .step.active .step-label { color: var(--accent-color); font-weight: 800; }
+
+        /* ================= Modals & Drawers ================= */
+        .offcanvas { border-top-left-radius: 20px; border-bottom-left-radius: 20px; width: 420px !important; border: none; box-shadow: -10px 0 30px rgba(0,0,0,0.05); }
+        .modal-content { border-radius: 20px; border: none; }
+        
+        .priority-insight-card { border-radius: 16px; padding: 20px; border-left: 5px solid; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .priority-high     { border-color: #dc3545; background: #fff5f5; }
+        .priority-medium   { border-color: #ffc107; background: #fffbf0; }
+        .priority-low      { border-color: #198754; background: #f0fdf4; }
+        .priority-critical { border-color: #7f1d1d; background: #fee2e2; }
+        .insight-list li { margin-bottom: 10px; font-size: 0.9rem; color: var(--dark-text); font-weight: 600; display: flex; align-items: start; }
+        .insight-list i  { margin-top: 3px; margin-right: 10px; width: 15px; text-align: center; }
+
+        /* Vertical Timeline inside Drawer */
+        .timeline-vertical { position: relative; padding-left: 20px; margin-top: 15px; }
+        .timeline-vertical::before { content: ''; position: absolute; left: 0; top: 5px; bottom: 0; width: 3px; background: #eef1fd; }
+        .v-step { position: relative; margin-bottom: 25px; }
+        .v-step::before { content: ''; position: absolute; left: -25px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--accent-color); z-index: 1; }
+        .v-step.completed::before { background: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(67,97,238,0.2); }
+        .v-step-time  { font-size: 0.75rem; color: #a3aed1; font-weight: 700; display: block; margin-bottom: 2px; text-transform: uppercase; }
+        .v-step-title { font-size: 0.95rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .v-step-desc  { font-size: 0.85rem; color: #6b7280; font-weight: 500; margin: 0; }
+
+        /* ================= Rating Stars ================= */
+        .star-rating-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 5px; }
+        .star-item { font-size: 2.2rem; color: #eef1fd; cursor: pointer; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s; }
+        .star-item.active { color: #ffc107; text-shadow: 0 2px 10px rgba(255, 193, 7, 0.3); }
+        .star-item:hover  { transform: scale(1.3); color: #ffdb58; }
+        .emoji-feedback { font-size: 3rem; min-height: 60px; animation: popIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55); }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .btn-check:checked + .btn-outline-success { background-color: #28a745; color: white; border-color: #28a745; }
+        .btn-check:checked + .btn-outline-danger  { background-color: #dc3545; color: white; border-color: #dc3545; }
+        .question-label { font-size: 0.9rem; font-weight: 700; color: var(--dark-text); display: flex; align-items: center; gap: 8px; }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); width: var(--sidebar-width); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        <ul class="nav sidebar-nav">
+            <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'file-complaint-page' %}"><i class="fa fa-plus-circle"></i> <span class="nav-text">File Complaint</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{% url 'my-complaints-page' %}"><i class="fa fa-list-ul"></i> <span class="nav-text">My Complaints</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'priority-guide-page' %}"><i class="fa fa-book-open"></i> <span class="nav-text">Priority Guide</span></a></li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item"><a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;"><i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span></a></li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <div class="header-wrapper" id="smartHeader">
+            <div class="content-inner pb-0">
+                <header class="top-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="sidebarToggle" class="toggle-btn shadow-sm"><i class="fas fa-bars"></i></button>
+                        <div>
+                            <h1 class="header-title">My Complaint History</h1>
+                            <p class="text-muted small mb-0 d-none d-md-block">Track the live progress of your submitted issues.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select id="statusFilter" class="form-select form-select-pill d-none d-sm-block">
+                            <option value="all">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                        <a href="{% url 'file-complaint-page' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="fa fa-plus me-1"></i> New Request
+                        </a>
+                    </div>
+                </header>
+            </div>
+        </div>
+
+        <div class="content-inner pt-2">
+            <div class="d-block d-sm-none mb-4">
+                <select id="statusFilterMobile" class="form-select form-select-pill w-100">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+            </div>
+
+            <div id="complaintList" class="row">
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2 text-muted fw-bold">Syncing your complaints...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="complaintDrawer">
+    <div class="offcanvas-header bg-light border-bottom p-4">
+        <h5 class="offcanvas-title fw-bold text-dark" id="drawerTitle">Details</h5>
+        <button type="button" class="btn-close bg-white rounded-circle p-2 shadow-sm" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4 bg-white">
+        <div id="drawerPriorityCard"></div>
+        
+        <h6 class="fw-bold mb-3 text-dark">Live Status Track</h6>
+        <div class="timeline-vertical" id="drawerTimeline"></div>
+        
+        <div class="mt-5 p-4 bg-light rounded-4 text-center border">
+            <i class="fa fa-circle-info fa-2x text-muted opacity-50 mb-2"></i>
+            <small class="text-dark fw-bold d-block mb-3">Need to update your request?</small>
+            <button class="btn btn-sm btn-outline-primary bg-white fw-bold rounded-pill px-4 shadow-sm">
+                <i class="fa fa-paperclip me-1"></i> Add Evidence or Notes
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-0 bg-light pb-3 px-4 pt-4 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="fa fa-star text-warning me-2"></i>Rate Service Quality
+                </h5>
+                <button type="button" class="btn-close bg-white rounded-circle p-2 shadow-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small text-center mb-3 fw-bold">
+                    Complaint <span id="ratingComplaintId" class="text-primary"></span>
+                </p>
+
+                <div class="bg-primary bg-opacity-10 p-3 rounded-4 mb-4 text-center border border-primary border-opacity-25">
+                    <h6 class="fw-bold text-primary mb-2" style="font-size: 0.8rem; text-transform: uppercase;">Service Team Being Rated</h6>
+                    <div id="ratingTeamDisplay" class="small text-dark fw-bold lh-lg"></div>
+                </div>
+
+                <div class="text-center mb-4">
+                    <label class="d-block small fw-bold text-uppercase text-muted mb-2">Overall Satisfaction (Required)</label>
+                    <div class="star-rating-container" id="starContainer">
+                        <i class="fa fa-star star-item" data-value="1"></i>
+                        <i class="fa fa-star star-item" data-value="2"></i>
+                        <i class="fa fa-star star-item" data-value="3"></i>
+                        <i class="fa fa-star star-item" data-value="4"></i>
+                        <i class="fa fa-star star-item" data-value="5"></i>
+                    </div>
+                    <div id="emoji-feedback" class="emoji-feedback mt-2">😶</div>
+                </div>
+
+                <div class="bg-light p-3 rounded-4 mb-4 border">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="question-label"><i class="fa fa-clock text-primary"></i> Resolved on time?</span>
+                        <div class="btn-group btn-group-sm shadow-sm rounded-pill">
+                            <input type="radio" class="btn-check" name="time" id="timeY" autocomplete="off">
+                            <label class="btn btn-outline-success fw-bold px-3" for="timeY">Yes</label>
+                            <input type="radio" class="btn-check" name="time" id="timeN" autocomplete="off">
+                            <label class="btn btn-outline-danger fw-bold px-3"  for="timeN">No</label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="question-label"><i class="fa fa-tools text-warning"></i> Fixed properly?</span>
+                        <div class="btn-group btn-group-sm shadow-sm rounded-pill">
+                            <input type="radio" class="btn-check" name="qual" id="qualY" autocomplete="off">
+                            <label class="btn btn-outline-success fw-bold px-3" for="qualY">Yes</label>
+                            <input type="radio" class="btn-check" name="qual" id="qualN" autocomplete="off">
+                            <label class="btn btn-outline-danger fw-bold px-3"  for="qualN">No</label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="question-label"><i class="fa fa-rotate-right text-danger"></i> Issue Reoccurred?</span>
+                        <div class="btn-group btn-group-sm shadow-sm rounded-pill">
+                            <input type="radio" class="btn-check" name="reoc" id="reocY" autocomplete="off">
+                            <label class="btn btn-outline-danger fw-bold px-3"  for="reocY">Yes</label>
+                            <input type="radio" class="btn-check" name="reoc" id="reocN" autocomplete="off">
+                            <label class="btn btn-outline-success fw-bold px-3" for="reocN">No</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <textarea class="form-control bg-light border p-3 rounded-4" rows="3" id="ratingComment"
+                              placeholder="Any comments for the staff? (Optional)"></textarea>
+                </div>
+                <div class="alert alert-danger d-none mt-3 small fw-bold border-0 shadow-sm" id="ratingError"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm fs-6"
+                        onclick="submitRating()">Submit Performance Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
+<script>
+    // ─────────────────────────────────────────
+    // CONFIG & AUTH GUARD
+    // ─────────────────────────────────────────
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token    = localStorage.getItem('aptcare_token');
+    const user     = JSON.parse(localStorage.getItem('aptcare_user') || 'null');
+
+    if (!token || !user) window.location.href = '{% url "login-page" %}';
+
+    // ─────────────────────────────────────────
+    // UI TOGGLES
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    let lastScrollTop = 0;
+    const smartHeader = document.getElementById('smartHeader');
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            smartHeader.classList.add('hide-header');
+        } else {
+            smartHeader.classList.remove('hide-header');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+    }, false);
+
+    // ─────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────
+    let allComplaints    = [];   
+    let currentRating    = 0;
+    let currentComplaintId = null;
+    const emojis = ['😠', '😞', '😐', '🙂', '🤩'];
+
+    // ─────────────────────────────────────────
+    // TIMELINE HELPERS
+    // ─────────────────────────────────────────
+    const statusMap = { 'pending': 0, 'in_progress': 2, 'resolved': 3 };
+
+    const stepsConfig = [
+        { label: 'Submitted',   desc: 'Received by System',    icon: 'fa-file-import'   },
+        { label: 'Assigned',    desc: 'Staff Allocated',        icon: 'fa-user-cog'      },
+        { label: 'In Progress', desc: 'Technician Working',     icon: 'fa-tools'         },
+        { label: 'Resolved',    desc: 'Issue Fixed',            icon: 'fa-check-circle'  }
+    ];
+
+    function generateTimeline(currentStatus) {
+        const currentIndex = statusMap[currentStatus] ?? 0;
+        return stepsConfig.map((step, index) => {
+            let cls      = 'step';
+            let iconHtml = `<i class="fa ${step.icon}"></i>`;
+            if (index < currentIndex) {
+                cls      = 'step completed';
+                iconHtml = `<i class="fa fa-check"></i>`;
+            } else if (index === currentIndex) {
+                cls = currentStatus === 'resolved' ? 'step completed' : 'step active';
+                if (currentStatus === 'resolved') iconHtml = `<i class="fa fa-check"></i>`;
+            }
+            return `
+                <div class="${cls}">
+                    <div class="step-icon shadow-sm">${iconHtml}</div>
+                    <div class="step-label">${step.label}</div>
+                    <div class="step-desc">${step.desc}</div>
+                </div>`;
+        }).join('');
+    }
+
+    // ─────────────────────────────────────────
+    // BADGE HELPERS
+    // ─────────────────────────────────────────
+    function statusBadge(status) {
+        const map = {
+            pending     : `<span class="badge-status status-pending"><i class="fa fa-clock me-1"></i>Pending</span>`,
+            in_progress : `<span class="badge-status status-in_progress"><i class="fa fa-tools me-1"></i>In Progress</span>`,
+            resolved    : `<span class="badge-status status-resolved"><i class="fa fa-check-circle me-1"></i>Resolved</span>`,
+        };
+        return map[status] || `<span class="badge-status">${status}</span>`;
+    }
+
+    function priorityBadge(level) {
+        return `<span class="pri-${level}">${level.charAt(0).toUpperCase() + level.slice(1)}</span>`;
+    }
+
+    function formatDate(dateStr) {
+        return new Date(dateStr).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    }
+
+    // ─────────────────────────────────────────
+    // GENERATE COMPLAINT CARD
+    // ─────────────────────────────────────────
+    function generateCard(c) {
+        const isResolved = c.status === 'resolved';
+        
+        let btnAction = `<button class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-sm bg-white view-details-btn" data-id="${c.id}">
+                           <i class="fa fa-eye me-1"></i> View Details
+                       </button>`;
+                       
+        if (isResolved) {
+            if (c.has_review) {
+                // If Already Reviewed: Show Outside Badge instead of Rate button
+                btnAction = `<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold shadow-sm me-2">
+                                <i class="fa fa-star me-1 text-warning"></i>Reviewed
+                             </span>
+                             <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold shadow-sm border view-details-btn" data-id="${c.id}">
+                                 Details
+                             </button>`;
+            } else {
+                // Not Reviewed yet: Show Rate Button
+                btnAction = `<button class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm rate-btn shadow" data-id="${c.id}">
+                                <i class="fa fa-star me-1"></i>Rate Service
+                             </button>
+                             <button class="btn btn-light btn-sm rounded-pill px-3 ms-2 fw-bold shadow-sm border view-details-btn" data-id="${c.id}">
+                                 Details
+                             </button>`;
+            }
+        }
+
+        return `
+            <div class="col-12 mb-4">
+                <div class="card p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                ${statusBadge(c.status)}
+                                <span class="text-muted fw-bold small">#CMP-${c.id}</span>
+                                ${priorityBadge(c.priority_level)}
+                            </div>
+                            <h5 class="fw-bold mb-1 text-dark">${c.category_name || 'Complaint'}</h5>
+                            <p class="text-muted mb-0 small fw-medium">
+                                <i class="fa fa-map-marker-alt me-1 text-primary opacity-50"></i>${c.location}
+                                <span class="mx-2 text-light">|</span>
+                                <i class="fa fa-calendar me-1 text-primary opacity-50"></i>${formatDate(c.created_at)}
+                            </p>
+                        </div>
+                        <div class="col-md-5 text-md-end mt-3 mt-md-0">${btnAction}</div>
+                    </div>
+                    <div class="timeline-steps">${generateTimeline(c.status)}</div>
+                </div>
+            </div>`;
+    }
+
+    // ─────────────────────────────────────────
+    // RENDER COMPLAINTS LIST
+    // ─────────────────────────────────────────
+    function renderComplaints(filter) {
+        const list = document.getElementById('complaintList');
+        const filtered = filter === 'all'
+            ? allComplaints
+            : allComplaints.filter(c => c.status === filter);
+
+        if (!filtered.length) {
+            list.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                        <i class="fa fa-folder-open fa-2x text-muted opacity-50"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark">No complaints found.</h6>
+                    <p class="text-muted small mb-3">Try changing your filters or file a new request.</p>
+                    <a href="{% url 'file-complaint-page' %}" class="btn btn-outline-primary rounded-pill px-4 fw-bold">File a new complaint</a>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = filtered.map(generateCard).join('');
+        attachCardListeners();
+    }
+
+    // ─────────────────────────────────────────
+    // LOAD COMPLAINTS FROM API
+    // ─────────────────────────────────────────
+    async function loadComplaints() {
+        try {
+            const res  = await fetch(`${API_BASE}/complaints/mine/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.href = '{% url "login-page" %}';
+                return;
+            }
+
+            allComplaints = await res.json();
+            renderComplaints('all');
+
+        } catch (err) {
+            document.getElementById('complaintList').innerHTML = `
+                <div class="col-12 text-center py-5 text-danger fw-bold">
+                    <i class="fa fa-circle-exclamation fa-2x mb-2 d-block"></i>
+                    Failed to load complaints. Please refresh the page.
+                </div>`;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // CARD EVENT LISTENERS
+    // ─────────────────────────────────────────
+    function attachCardListeners() {
+        // View Details → open offcanvas drawer
+        document.querySelectorAll('.view-details-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = parseInt(this.dataset.id);
+                const c  = allComplaints.find(x => x.id === id);
+                if (!c) return;
+
+                document.getElementById('drawerTitle').textContent = `Details #CMP-${c.id}`;
+
+                // Priority card
+                const pLevel = c.priority_level;
+                const pClass = `priority-${pLevel}`;
+                const pColor = pLevel === 'critical' ? 'text-danger' :
+                               pLevel === 'high'     ? 'text-danger' :
+                               pLevel === 'medium'   ? 'text-warning' : 'text-success';
+
+                const slaMap = { critical:'2 Hours', high:'8 Hours', medium:'24 Hours', low:'48 Hours' };
+
+                document.getElementById('drawerPriorityCard').innerHTML = `
+                    <div class="priority-insight-card ${pClass}">
+                        <h6 class="fw-bold ${pColor} mb-2">
+                            <i class="fa fa-info-circle me-2"></i>Priority: ${pLevel.toUpperCase()}
+                        </h6>
+                        <p class="small text-muted mb-3 fw-bold"><strong>Target SLA:</strong> ${slaMap[pLevel] || '—'}</p>
+                        <h6 class="small fw-bold text-uppercase text-muted mb-2">System Calculation:</h6>
+                        <ul class="list-unstyled insight-list mb-0">
+                            <li><i class="fa fa-wrench text-primary"></i> <strong>Category:</strong> <span class="ms-1">${c.category_name || '—'}</span></li>
+                            <li><i class="fa fa-users text-primary"></i> <strong>Impact Score:</strong> <span class="ms-1">${c.impact_scope}</span></li>
+                            <li><i class="fa fa-shield-alt text-primary"></i> <strong>Safety Risk:</strong> <span class="ms-1">${c.is_safety_risk ? 'Yes' : 'No'}</span></li>
+                            <li><i class="fa fa-star text-primary"></i> <strong>Final Score:</strong> <span class="ms-1">${c.priority_score}</span></li>
+                        </ul>
+                    </div>`;
+
+                // Vertical timeline
+                const steps = [
+                    { title: 'Submitted',   desc: 'Complaint received by system.',  done: true, time: c.created_at },
+                    { title: 'Assigned',    desc: `Staff: ${c.staff_name || 'Pending allocation'}`, done: c.status !== 'pending', time: c.updated_at },
+                    { title: 'In Progress', desc: 'Technician working on the issue.', done: c.status === 'in_progress' || c.status === 'resolved', time: c.updated_at },
+                    { title: 'Resolved',    desc: 'Issue has been fixed.',           done: c.status === 'resolved', time: c.updated_at },
+                ];
+
+                document.getElementById('drawerTimeline').innerHTML = steps.map(s => `
+                    <div class="v-step ${s.done ? 'completed' : ''}">
+                        <span class="v-step-time">${s.done ? formatDate(s.time) : 'Awaiting Update'}</span>
+                        <h6 class="v-step-title">${s.title}</h6>
+                        <p class="v-step-desc">${s.desc}</p>
+                    </div>`).join('');
+
+                new bootstrap.Offcanvas(document.getElementById('complaintDrawer')).show();
+            });
+        });
+
+        // Rate button → open rating modal
+        document.querySelectorAll('.rate-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentComplaintId = this.dataset.id;
+                const c = allComplaints.find(x => x.id === parseInt(currentComplaintId));
+                if (!c) return;
+
+                document.getElementById('ratingComplaintId').textContent = `#CMP-${currentComplaintId}`;
+                document.getElementById('ratingError').classList.add('d-none');
+
+                // NEW: Logic to extract Assisting Staff from Admin's resolution notes!
+                // Admin saves it formatted like: "Fixed the pipe | ASSISTED_BY: [Deepa Thomas, Ravi Pillai]"
+                const rawNotes = c.resolution_comments || c.resolution_notes || c.description || '';
+                const assistMatch = rawNotes.match(/ASSISTED_BY:\s*\[(.*?)\]/);
+                
+                let teamStr = `<div class="mb-1"><i class="fa fa-user-gear me-2 text-primary opacity-50"></i> Primary: <strong>${c.staff_name || 'Assigned Staff'}</strong></div>`;
+                if (assistMatch && assistMatch[1]) {
+                    teamStr += `<div><i class="fa fa-users-cog me-2 text-primary opacity-50"></i> Assisting: <strong>${assistMatch[1]}</strong></div>`;
+                }
+                document.getElementById('ratingTeamDisplay').innerHTML = teamStr;
+
+                // Reset stars and emoji
+                currentRating = 0;
+                document.querySelectorAll('.star-item').forEach(s => s.classList.remove('active'));
+                document.getElementById('emoji-feedback').textContent = '😶';
+                document.getElementById('ratingComment').value = '';
+
+                // Reset yes/no radios
+                ['timeY','timeN','qualY','qualN','reocY','reocN'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.checked = false;
+                });
+
+                new bootstrap.Modal(document.getElementById('ratingModal')).show();
+            });
+        });
+    }
+
+    // ─────────────────────────────────────────
+    // STAR RATING INTERACTION
+    // ─────────────────────────────────────────
+    document.querySelectorAll('.star-item').forEach(star => {
+        star.addEventListener('click', function() {
+            currentRating = parseInt(this.dataset.value);
+            document.querySelectorAll('.star-item').forEach((s, i) => {
+                s.classList.toggle('active', i < currentRating);
+            });
+            const emojiEl = document.getElementById('emoji-feedback');
+            emojiEl.textContent = emojis[currentRating - 1];
+            // Re-trigger animation
+            emojiEl.classList.remove('emoji-feedback');
+            void emojiEl.offsetWidth; // force reflow
+            emojiEl.classList.add('emoji-feedback');
+        });
+    });
+
+    // ─────────────────────────────────────────
+    // SUBMIT RATING
+    // ─────────────────────────────────────────
+    async function submitRating() {
+        if (currentRating === 0) {
+            Swal.fire({ icon:'warning', title:'Missing Info', text:'Please select a star rating first!', confirmButtonColor: '#4361ee' });
+            return;
+        }
+
+        const errEl = document.getElementById('ratingError');
+        const btn   = document.querySelector('#ratingModal .modal-footer .btn-primary');
+        btn.disabled    = true;
+        btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span>Submitting...`;
+        errEl.classList.add('d-none');
+
+        const resolvedOntime = document.getElementById('timeY')?.checked ? true  :
+                               document.getElementById('timeN')?.checked ? false : null;
+        const fixedProperly  = document.getElementById('qualY')?.checked ? true  :
+                               document.getElementById('qualN')?.checked ? false : null;
+        const reoccurred     = document.getElementById('reocY')?.checked ? true  :
+                               document.getElementById('reocN')?.checked ? false : null;
+        const comment        = document.getElementById('ratingComment')?.value.trim() || '';
+
+        try {
+            const res = await fetch(`${API_BASE}/complaints/${currentComplaintId}/review/`, {
+                method : 'POST',
+                headers: { 'Authorization':`Token ${token}`, 'Content-Type':'application/json' },
+                body   : JSON.stringify({
+                    rating: currentRating, resolved_ontime: resolvedOntime,
+                    fixed_properly: fixedProperly, reoccurred: reoccurred, comment
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                errEl.innerHTML = `<i class="fa fa-triangle-exclamation me-1"></i>${data.error || 'Failed to submit review.'}`;
+                errEl.classList.remove('d-none');
+                btn.disabled = false; btn.textContent = 'Submit Performance Review';
+                return;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('ratingModal')).hide();
+
+            // Mark as reviewed locally to update UI immediately
+            const idx = allComplaints.findIndex(c => c.id === parseInt(currentComplaintId));
+            if (idx !== -1) {
+                allComplaints[idx].has_review = true;
+                // Re-render only current filter state so the card swaps to "Reviewed" badge
+                renderComplaints(document.getElementById('statusFilter').value);
+            }
+
+            Swal.fire({
+                icon:'success', title:'Feedback Sent!',
+                text:'Your rating helps us improve our staff performance. Thank you!',
+                timer:3000, showConfirmButton:false
+            });
+
+        } catch (err) {
+            errEl.innerHTML = '<i class="fa fa-triangle-exclamation me-1"></i>Server error. Please try again.';
+            errEl.classList.remove('d-none');
+        }
+
+        btn.disabled = false; btn.textContent = 'Submit Performance Review';
+    }
+
+    // ─────────────────────────────────────────
+    // FILTER EVENTS
+    // ─────────────────────────────────────────
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        document.getElementById('statusFilterMobile').value = this.value;
+        renderComplaints(this.value);
+    });
+    document.getElementById('statusFilterMobile').addEventListener('change', function() {
+        document.getElementById('statusFilter').value = this.value;
+        renderComplaints(this.value);
+    });
+
+    // ─────────────────────────────────────────
+    // SIGN OUT
+    // ─────────────────────────────────────────
+    document.getElementById('signOutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await fetch(`${API_BASE}/auth/logout/`, { method : 'POST', headers: { 'Authorization': `Token ${token}` }});} catch (_) {}
+        localStorage.clear(); window.location.href = '{% url "login-page" %}';
+    });
+
+    // INIT
+    loadComplaints();
+</script>
+{% include 'resident_chatbot.html' %}
+</body>
+</html>

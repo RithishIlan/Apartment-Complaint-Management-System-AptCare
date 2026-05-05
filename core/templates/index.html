@@ -1,0 +1,1316 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AptCare | Smart Apartment Complaint Management</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ════════════════════════════════════════
+           DESIGN SYSTEM
+        ════════════════════════════════════════ */
+        :root {
+            --primary:       #4361ee;
+            --primary-dark:  #3451d1;
+            --primary-light: #eef1fd;
+            --teal:          #2ec4b6;
+            --accent:        #6b5aed;
+            --coral:         #ff6b6b;
+            --dark:          #0f1117;
+            --dark-2:        #1a1d28;
+            --dark-3:        #252836;
+            --gray:          #6b7280;
+            --gray-light:    #9ca3af;
+            --light:         #f5f7ff;
+            --border:        #e8edff;
+            --success:       #10b981;
+            --warning:       #f59e0b;
+            --danger:        #ef4444;
+
+            --shadow-glow: 0 0 60px rgba(67,97,238,0.15);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+            --shadow-hero: 0 24px 80px rgba(67,97,238,0.2), 0 4px 16px rgba(67,97,238,0.1);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: 'Sora', sans-serif;
+            line-height: 1.2;
+        }
+
+        /* ════════════════════════════════════════
+           GLOBAL BACKGROUND
+        ════════════════════════════════════════ */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(ellipse 70% 50% at 15% 5%, rgba(67,97,238,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 85% 15%, rgba(107,90,237,0.05) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 50% 100%, rgba(46,196,182,0.04) 0%, transparent 60%);
+        }
+
+        /* ════════════════════════════════════════
+           NAVBAR
+        ════════════════════════════════════════ */
+        .navbar {
+            background: rgba(245,247,255,0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(232,237,255,0.8);
+            padding: 0;
+            position: fixed; width: 100%; top: 0; z-index: 1000;
+            transition: all 0.3s;
+        }
+        .navbar .container {
+            padding-top: 16px; padding-bottom: 16px;
+        }
+        .navbar.scrolled {
+            background: rgba(255,255,255,0.96);
+            box-shadow: 0 4px 24px rgba(67,97,238,0.10);
+        }
+
+        /* Brand */
+        .navbar-brand {
+            display: flex; align-items: center; gap: 12px;
+            text-decoration: none;
+        }
+        .brand-logo-img {
+            width: 42px; height: 42px; object-fit: contain;
+            border-radius: 10px;
+        }
+        .brand-text-wrap { display: flex; flex-direction: column; gap: 1px; }
+        .brand-name {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.3rem; font-weight: 900;
+            line-height: 1; letter-spacing: -0.4px;
+        }
+        .brand-name .apt  { color: var(--primary); }
+        .brand-name .care { color: var(--teal); }
+        .brand-tagline {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px;
+            color: var(--gray-light); text-transform: uppercase;
+        }
+
+        /* Nav links */
+        .navbar-nav .nav-link {
+            font-weight: 600; font-size: 0.875rem;
+            color: var(--dark-2) !important;
+            padding: 8px 14px !important;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+        .navbar-nav .nav-link:hover {
+            color: var(--primary) !important;
+            background: var(--primary-light);
+        }
+
+        .btn-nav {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white !important; border: none;
+            padding: 10px 24px !important; border-radius: 50px !important;
+            font-weight: 700 !important; font-size: 0.85rem !important;
+            box-shadow: 0 4px 16px rgba(67,97,238,0.35);
+            transition: all 0.25s !important;
+        }
+        .btn-nav:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 24px rgba(67,97,238,0.45) !important;
+        }
+
+        /* Toggler */
+        .navbar-toggler {
+            border: 1.5px solid var(--border) !important;
+            border-radius: 8px !important; padding: 6px 10px !important;
+            color: var(--dark) !important;
+        }
+        .navbar-toggler:focus { box-shadow: none !important; }
+
+        /* ════════════════════════════════════════
+           HERO
+        ════════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            padding-top: 100px;
+            display: flex; align-items: center;
+            position: relative; overflow: hidden;
+        }
+
+        /* Floating orbs */
+        .hero-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px); pointer-events: none;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(67,97,238,0.12) 0%, transparent 70%);
+            top: -100px; right: -100px;
+            animation: orbFloat 12s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(46,196,182,0.10) 0%, transparent 70%);
+            bottom: -50px; left: -100px;
+            animation: orbFloat 16s ease-in-out infinite reverse;
+        }
+        .orb-3 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(107,90,237,0.08) 0%, transparent 70%);
+            top: 50%; left: 40%;
+            animation: orbFloat 10s ease-in-out infinite 3s;
+        }
+        @keyframes orbFloat {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(30px,-40px) scale(1.05); }
+            66%      { transform: translate(-20px,25px) scale(0.97); }
+        }
+
+        /* Hero eyebrow */
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--primary-light);
+            border: 1px solid #c7d2fe;
+            border-radius: 50px; padding: 6px 16px;
+            font-size: 0.78rem; font-weight: 700;
+            color: var(--primary); letter-spacing: 0.3px;
+            margin-bottom: 24px;
+            animation: heroIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s both;
+        }
+        .hero-eyebrow .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:0.5; transform:scale(0.8); }
+        }
+
+        /* Hero title */
+        .hero-title {
+            font-size: clamp(2.6rem, 5vw, 4.2rem);
+            font-weight: 900;
+            letter-spacing: -1.5px;
+            line-height: 1.08;
+            margin-bottom: 24px;
+            animation: heroIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+        }
+        .hero-title .line-accent {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-title .line-plain { color: var(--dark); }
+
+        /* Hero subtitle */
+        .hero-subtitle {
+            font-size: 1.1rem; color: var(--gray);
+            max-width: 520px; line-height: 1.7;
+            margin-bottom: 36px; font-weight: 400;
+            animation: heroIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+        }
+
+        @keyframes heroIn {
+            from { opacity:0; transform:translateY(24px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        /* Hero CTA buttons */
+        .hero-cta {
+            display: flex; gap: 14px; flex-wrap: wrap;
+            margin-bottom: 48px;
+            animation: heroIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+        }
+        .btn-hero-primary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white; text-decoration: none;
+            padding: 14px 30px; border-radius: 50px;
+            font-weight: 700; font-size: 0.95rem;
+            box-shadow: 0 8px 28px rgba(67,97,238,0.40);
+            transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+            border: none;
+        }
+        .btn-hero-primary:hover {
+            color: white; transform: translateY(-3px);
+            box-shadow: 0 14px 36px rgba(67,97,238,0.50);
+        }
+        .btn-hero-primary:active { transform: scale(0.97); }
+
+        .btn-hero-secondary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: white; color: var(--dark);
+            text-decoration: none;
+            padding: 14px 28px; border-radius: 50px;
+            font-weight: 600; font-size: 0.95rem;
+            border: 1.5px solid var(--border);
+            box-shadow: var(--shadow-card);
+            transition: all 0.25s;
+        }
+        .btn-hero-secondary:hover {
+            color: var(--primary); border-color: #c7d2fe;
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Social proof strip */
+        .hero-social-proof {
+            display: flex; align-items: center; gap: 16px;
+            animation: heroIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.5s both;
+        }
+        .proof-avatars { display: flex; }
+        .proof-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 2px solid white;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; color: white;
+            margin-left: -10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .proof-avatar:first-child { margin-left: 0; }
+        .proof-text { font-size: 0.82rem; font-weight: 600; color: var(--gray); }
+        .proof-text strong { color: var(--dark); }
+        .proof-stars { color: #f59e0b; font-size: 0.75rem; }
+
+        /* Hero visual card */
+        .hero-visual {
+            position: relative; z-index: 2;
+            animation: heroIn 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+        }
+        .hero-card-main {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-hero);
+            border: 1px solid rgba(232,237,255,0.8);
+            overflow: hidden;
+            position: relative;
+        }
+        .hero-card-main::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--teal), var(--accent));
+        }
+        .hero-card-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f8faff, #eef1fd);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .traffic-dots { display: flex; gap: 6px; }
+        .traffic-dot {
+            width: 11px; height: 11px; border-radius: 50%;
+        }
+        .td-red    { background: #ff5f57; }
+        .td-yellow { background: #ffbd2e; }
+        .td-green  { background: #28c940; }
+        .card-header-title {
+            font-size: 0.78rem; font-weight: 700;
+            color: var(--gray); letter-spacing: 0.3px;
+        }
+        .hero-card-body { padding: 20px; }
+
+        /* Mini complaint cards inside hero */
+        .mini-complaint {
+            background: #f8faff; border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 12px 14px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 12px;
+            transition: transform 0.2s;
+        }
+        .mini-complaint:hover { transform: translateX(4px); }
+        .mini-complaint:last-child { margin-bottom: 0; }
+        .mini-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .mini-info { flex: 1; min-width: 0; }
+        .mini-title {
+            font-size: 0.8rem; font-weight: 700;
+            color: var(--dark); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .mini-sub {
+            font-size: 0.68rem; color: var(--gray-light); font-weight: 500;
+        }
+        .mini-badge {
+            font-size: 0.62rem; font-weight: 700;
+            padding: 3px 9px; border-radius: 20px;
+            white-space: nowrap;
+        }
+        .badge-critical { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+        .badge-progress { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-resolved { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        /* Floating stat cards */
+        .stat-float {
+            position: absolute;
+            background: white; border-radius: var(--radius-md);
+            padding: 14px 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(232,237,255,0.9);
+            animation: floatCard 5s ease-in-out infinite;
+        }
+        .stat-float-1 {
+            top: -20px; right: -30px;
+            animation-delay: 0s;
+        }
+        .stat-float-2 {
+            bottom: 40px; left: -40px;
+            animation-delay: 2.5s;
+        }
+        @keyframes floatCard {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-10px); }
+        }
+        .stat-float .stat-num {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.4rem; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; line-height: 1;
+        }
+        .stat-float .stat-label {
+            font-size: 0.68rem; font-weight: 600;
+            color: var(--gray-light); letter-spacing: 0.3px;
+        }
+
+        /* ════════════════════════════════════════
+           FEATURES SLIDESHOW
+        ════════════════════════════════════════ */
+        #features { padding: 80px 0; }
+
+        .features-slideshow {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .features-slideshow::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--teal), var(--accent));
+            z-index: 10;
+        }
+        .swiper-slide {
+            padding: 60px;
+        }
+        .slide-content { padding-right: 20px; }
+        .slide-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--primary-light), #dde4fc);
+            border-radius: 18px; color: var(--primary);
+            font-size: 1.6rem;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(67,97,238,0.15);
+        }
+        .slide-title {
+            font-size: 1.8rem; font-weight: 800;
+            letter-spacing: -0.5px; margin-bottom: 16px;
+            color: var(--dark);
+        }
+        .slide-text {
+            font-size: 0.95rem; color: var(--gray);
+            line-height: 1.75; max-width: 480px;
+        }
+        .slide-image {
+            border-radius: var(--radius-md); overflow: hidden;
+        }
+        .slide-image img {
+            width: 100%; height: 300px;
+            object-fit: cover; border-radius: var(--radius-md);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+        .swiper-pagination-bullet {
+            background: var(--border) !important; opacity:1 !important; width:8px; height:8px;
+        }
+        .swiper-pagination-bullet-active {
+            background: var(--primary) !important; width: 24px !important; border-radius: 4px !important;
+        }
+        .swiper-button-next, .swiper-button-prev {
+            color: var(--primary) !important;
+            background: white; width: 44px !important; height: 44px !important;
+            border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.10) !important;
+            border: 1px solid var(--border);
+        }
+        .swiper-button-next::after, .swiper-button-prev::after {
+            font-size: 0.85rem !important; font-weight: 900 !important;
+        }
+
+        /* ════════════════════════════════════════
+           SECTION HEADER
+        ════════════════════════════════════════ */
+        .section-eyebrow {
+            display: inline-block;
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 1.5px;
+            text-transform: uppercase; color: var(--primary);
+            background: var(--primary-light); border: 1px solid #c7d2fe;
+            border-radius: 20px; padding: 4px 14px; margin-bottom: 14px;
+        }
+        .section-title {
+            text-align: center; margin-bottom: 56px;
+        }
+        .section-title h2 {
+            font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+            font-weight: 900; letter-spacing: -0.8px;
+            color: var(--dark); margin-bottom: 14px;
+        }
+        .section-title p {
+            font-size: 1rem; color: var(--gray);
+            max-width: 560px; margin: 0 auto; line-height: 1.7;
+        }
+
+        /* ════════════════════════════════════════
+           PROBLEM / SOLUTION
+        ════════════════════════════════════════ */
+        #solution {
+            padding: 100px 0;
+            background: linear-gradient(180deg, #f0f3ff 0%, white 100%);
+        }
+
+        .vs-card {
+            border-radius: var(--radius-lg);
+            padding: 36px; height: 100%;
+            position: relative; overflow: hidden;
+        }
+        .vs-card-problem {
+            background: white;
+            border: 1.5px solid #fecaca;
+            box-shadow: 0 4px 24px rgba(239,68,68,0.07);
+        }
+        .vs-card-problem::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+        .vs-card-solution {
+            background: white;
+            border: 1.5px solid #bbf7d0;
+            box-shadow: 0 4px 24px rgba(16,185,129,0.07);
+        }
+        .vs-card-solution::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        .vs-card-title {
+            font-size: 1.15rem; font-weight: 800;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+        }
+        .vs-card-list {
+            list-style: none; padding: 0; margin: 0;
+        }
+        .vs-card-list li {
+            font-size: 0.9rem; padding: 10px 0;
+            border-bottom: 1px solid #f5f7ff;
+            display: flex; align-items: flex-start; gap: 10px;
+            color: var(--gray);
+        }
+        .vs-card-list li:last-child { border-bottom: none; }
+        .vs-card-list li .li-icon { flex-shrink: 0; margin-top: 2px; }
+        .vs-card-problem .li-icon { color: #ef4444; }
+        .vs-card-solution .li-icon { color: #10b981; }
+
+        .vs-divider {
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .vs-circle {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; font-weight: 900; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(67,97,238,0.35);
+            font-family: 'Sora', sans-serif;
+            z-index: 2;
+        }
+
+        /* ════════════════════════════════════════
+           FEATURES GRID
+        ════════════════════════════════════════ */
+        #benefits { padding: 100px 0; }
+
+        .feature-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 32px 28px;
+            border: 1.5px solid var(--border);
+            box-shadow: var(--shadow-card);
+            height: 100%;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, var(--primary-light) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(67,97,238,0.12), 0 4px 16px rgba(67,97,238,0.08);
+            border-color: #c7d2fe;
+        }
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary-light), #dde4fc);
+            color: var(--primary); font-size: 1.4rem;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 14px rgba(67,97,238,0.15);
+            position: relative; z-index: 1;
+        }
+        .feature-title {
+            font-size: 1.05rem; font-weight: 800;
+            letter-spacing: -0.2px; margin-bottom: 12px;
+            color: var(--dark); position: relative; z-index: 1;
+        }
+        .feature-text {
+            font-size: 0.875rem; color: var(--gray);
+            line-height: 1.7; position: relative; z-index: 1;
+        }
+
+        /* ════════════════════════════════════════
+           STATS STRIP
+        ════════════════════════════════════════ */
+        .stats-section {
+            padding: 70px 0;
+            background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-3) 100%);
+            position: relative; overflow: hidden;
+        }
+        .stats-section::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='25'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .stat-item { text-align: center; position: relative; }
+        .stat-item + .stat-item::before {
+            content: '';
+            position: absolute; left: 0; top: 20%;
+            height: 60%; width: 1px;
+            background: rgba(255,255,255,0.1);
+        }
+        .stat-number {
+            font-family: 'Sora', sans-serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900; line-height: 1;
+            background: linear-gradient(135deg, white 0%, rgba(255,255,255,0.7) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 8px;
+        }
+        .stat-number span {
+            background: linear-gradient(135deg, var(--teal), #5eead4);
+            -webkit-background-clip: text; background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.82rem; font-weight: 600;
+            color: rgba(255,255,255,0.55); letter-spacing: 0.5px;
+        }
+
+        /* ════════════════════════════════════════
+           CTA SECTION
+        ════════════════════════════════════════ */
+        .cta-section {
+            padding: 100px 0;
+            position: relative; overflow: hidden;
+        }
+        .cta-inner {
+            background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-3) 100%);
+            border-radius: 32px;
+            padding: 80px 60px;
+            text-align: center;
+            position: relative; overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+        }
+        .cta-inner::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 30% 50%, rgba(67,97,238,0.2) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 70% 50%, rgba(46,196,182,0.15) 0%, transparent 60%);
+        }
+        .cta-inner > * { position: relative; z-index: 1; }
+        .cta-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50px; padding: 6px 16px; margin-bottom: 24px;
+            font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.85);
+            letter-spacing: 0.5px;
+        }
+        .cta-title {
+            font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+            font-weight: 900; letter-spacing: -0.8px;
+            color: white; max-width: 680px;
+            margin: 0 auto 16px;
+        }
+        .cta-sub {
+            font-size: 1rem; color: rgba(255,255,255,0.6);
+            max-width: 500px; margin: 0 auto 36px; line-height: 1.7;
+        }
+        .btn-cta {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%);
+            color: white; text-decoration: none;
+            padding: 16px 40px; border-radius: 50px;
+            font-weight: 700; font-size: 1rem;
+            box-shadow: 0 8px 32px rgba(67,97,238,0.5);
+            transition: all 0.25s;
+            border: none;
+        }
+        .btn-cta:hover {
+            color: white; transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(67,97,238,0.6);
+        }
+        .btn-cta .btn-arrow { transition: transform 0.2s; }
+        .btn-cta:hover .btn-arrow { transform: translateX(4px); }
+
+        /* ════════════════════════════════════════
+           FOOTER
+        ════════════════════════════════════════ */
+        .footer {
+            background: var(--dark-2);
+            padding: 70px 0 0;
+            position: relative;
+        }
+        .footer::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        .footer-brand {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.5rem; font-weight: 900;
+            text-decoration: none; display: flex; align-items: center;
+            gap: 10px; margin-bottom: 16px;
+        }
+        .footer-brand img { width: 38px; height: 38px; object-fit: contain; filter: brightness(1.1); border-radius: 8px; }
+        .footer-brand-text .apt  { color: #818cf8; }
+        .footer-brand-text .care { color: var(--teal); }
+        .footer-desc {
+            font-size: 0.875rem; color: rgba(255,255,255,0.5);
+            line-height: 1.7; max-width: 280px; margin-bottom: 24px;
+        }
+        .footer-social {
+            display: flex; gap: 10px;
+        }
+        .social-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.6); text-decoration: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; transition: all 0.2s;
+        }
+        .social-btn:hover {
+            background: var(--primary); color: white;
+            border-color: var(--primary); transform: translateY(-2px);
+        }
+        .footer-heading {
+            font-family: 'Sora', sans-serif;
+            font-size: 0.75rem; font-weight: 800;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            color: rgba(255,255,255,0.9); margin-bottom: 20px;
+        }
+        .footer-links { list-style: none; padding: 0; margin: 0; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a {
+            color: rgba(255,255,255,0.45); text-decoration: none;
+            font-size: 0.875rem; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .footer-links a:hover { color: white; padding-left: 4px; }
+
+        .footer-app-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 10px 14px;
+            color: rgba(255,255,255,0.7); text-decoration: none;
+            font-size: 0.8rem; font-weight: 600;
+            transition: all 0.2s; margin-bottom: 10px;
+        }
+        .footer-app-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .footer-app-btn i { font-size: 1.1rem; }
+
+        .footer-bottom {
+            margin-top: 56px; padding: 20px 0;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .footer-copy {
+            font-size: 0.8rem; color: rgba(255,255,255,0.3);
+        }
+        .footer-bottom-links {
+            display: flex; gap: 20px;
+        }
+        .footer-bottom-links a {
+            font-size: 0.8rem; color: rgba(255,255,255,0.3);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-bottom-links a:hover { color: rgba(255,255,255,0.7); }
+
+        /* ════════════════════════════════════════
+           ANIMATIONS & UTILITIES
+        ════════════════════════════════════════ */
+        .fade-up {
+            opacity: 0; transform: translateY(28px);
+            transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1),
+                        transform 0.65s cubic-bezier(0.22,1,0.36,1);
+        }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* ════════════════════════════════════════
+           RESPONSIVE
+        ════════════════════════════════════════ */
+        @media (max-width: 992px) {
+            .swiper-slide { padding: 40px 32px; }
+            .slide-image { margin-top: 28px; }
+            .slide-image img { height: 220px; }
+            .cta-inner { padding: 56px 32px; }
+            .stat-item + .stat-item::before { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding-top: 90px; }
+            .hero-title { font-size: 2.2rem; letter-spacing: -0.8px; }
+            .hero-visual { margin-top: 40px; }
+            .stat-float { display: none; }
+            .hero-cta { flex-direction: column; }
+            .btn-hero-primary, .btn-hero-secondary { justify-content: center; }
+            .swiper-slide { padding: 28px; }
+            .slide-content { text-align: center; }
+            .slide-icon { margin: 0 auto 20px; }
+            .cta-inner { padding: 40px 24px; border-radius: 20px; }
+            .vs-divider { display: none; }
+            #solution .row .col-lg-6:first-child { margin-bottom: 24px; }
+            .footer-bottom { justify-content: center; text-align: center; }
+            .footer-bottom-links { justify-content: center; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════
+         NAVBAR
+    ════════════════════════════════════ -->
+    <nav class="navbar navbar-expand-lg" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{% static 'aptCareLOGO.png' %}" alt="AptCare Logo" class="brand-logo-img">
+                <div class="brand-text-wrap">
+                    <div class="brand-name"><span class="apt">Apt</span><span class="care">Care</span></div>
+                    <span class="brand-tagline">Smart Living</span>
+                </div>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#solution">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#benefits">Benefits</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'login-page' %}" class="btn-nav nav-link">
+                            Get Started <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════
+         HERO
+    ════════════════════════════════════ -->
+    <section class="hero">
+        <div class="hero-orb orb-1"></div>
+        <div class="hero-orb orb-2"></div>
+        <div class="hero-orb orb-3"></div>
+
+        <div class="container">
+            <div class="row align-items-center g-5">
+
+                <!-- Left: Copy -->
+                <div class="col-lg-6">
+                    <div class="hero-eyebrow">
+                        <div class="dot"></div>
+                        Smart Complaint Management System
+                    </div>
+
+                    <h1 class="hero-title">
+                        <span class="line-plain">A Smarter Way to</span><br>
+                        <span class="line-accent">Handle Apartment</span><br>
+                        <span class="line-plain">Complaints</span>
+                    </h1>
+
+                    <p class="hero-subtitle">
+                        No more ignored issues. No more stress. AptCare ensures every complaint is prioritized, tracked, and resolved with complete transparency.
+                    </p>
+
+                    <div class="hero-cta">
+                        <a href="{% url 'login-page' %}" class="btn-hero-primary">
+                            Get Started Free
+                            <i class="fas fa-arrow-right btn-arrow"></i>
+                        </a>
+                        <a href="#features" class="btn-hero-secondary">
+                            <i class="fas fa-play-circle" style="color:var(--primary)"></i>
+                            See Features
+                        </a>
+                    </div>
+
+                    <div class="hero-social-proof">
+                        <div class="proof-avatars">
+                            <div class="proof-avatar">RK</div>
+                            <div class="proof-avatar" style="background:linear-gradient(135deg,var(--teal),#0d9488)">SM</div>
+                            <div class="proof-avatar" style="background:linear-gradient(135deg,var(--accent),#4f46e5)">AP</div>
+                            <div class="proof-avatar" style="background:linear-gradient(135deg,var(--coral),#dc2626)">JD</div>
+                        </div>
+                        <div>
+                            <div class="proof-stars">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <div class="proof-text"><strong>150+</strong> residents trust AptCare</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Visual -->
+                <div class="col-lg-6">
+                    <div class="hero-visual">
+                        <div class="hero-card-main">
+                            <div class="hero-card-header">
+                                <div class="traffic-dots">
+                                    <div class="traffic-dot td-red"></div>
+                                    <div class="traffic-dot td-yellow"></div>
+                                    <div class="traffic-dot td-green"></div>
+                                </div>
+                                <span class="card-header-title">AptCare Dashboard</span>
+                            </div>
+                            <div class="hero-card-body">
+                                <div class="mini-complaint">
+                                    <div class="mini-icon" style="background:#fff5f5;color:#dc2626;"><i class="fas fa-bolt"></i></div>
+                                    <div class="mini-info">
+                                        <div class="mini-title">Power Failure — Block C, 3rd Floor</div>
+                                        <div class="mini-sub">Filed 12 mins ago · Electrical</div>
+                                    </div>
+                                    <span class="mini-badge badge-critical">Critical</span>
+                                </div>
+                                <div class="mini-complaint">
+                                    <div class="mini-icon" style="background:#eff6ff;color:#1d4ed8;"><i class="fas fa-tools"></i></div>
+                                    <div class="mini-info">
+                                        <div class="mini-title">Lift Malfunction — Tower A</div>
+                                        <div class="mini-sub">Assigned to Arun M. · In progress</div>
+                                    </div>
+                                    <span class="mini-badge badge-progress">In Progress</span>
+                                </div>
+                                <div class="mini-complaint">
+                                    <div class="mini-icon" style="background:#f0fdf4;color:#166534;"><i class="fas fa-droplet"></i></div>
+                                    <div class="mini-info">
+                                        <div class="mini-title">Water Leakage — Block B, 1st Floor</div>
+                                        <div class="mini-sub">Resolved by Mohan D. · 2 hrs ago</div>
+                                    </div>
+                                    <span class="mini-badge badge-resolved">Resolved</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating stat cards -->
+                        <div class="stat-float stat-float-1">
+                            <div class="stat-num">94%</div>
+                            <div class="stat-label">Resolution Rate</div>
+                        </div>
+                        <div class="stat-float stat-float-2">
+                            <div class="stat-num">2.4h</div>
+                            <div class="stat-label">Avg Response</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         FEATURES SLIDESHOW
+    ════════════════════════════════════ -->
+    <section id="features" class="container my-5">
+        <div class="features-slideshow fade-up">
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 slide-content">
+                                <div class="slide-icon"><i class="fas fa-brain"></i></div>
+                                <h3 class="slide-title">Smart Priority Engine</h3>
+                                <p class="slide-text">
+                                    Our system automatically calculates complaint urgency based on multiple factors: safety impact, number of affected residents, evidence provided, and type of issue. Critical problems like water leaks or electrical issues get immediate attention.
+                                </p>
+                            </div>
+                            <div class="col-lg-6 slide-image">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Priority System">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-slide">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 slide-content">
+                                <div class="slide-icon"><i class="fas fa-bell"></i></div>
+                                <h3 class="slide-title">Neglect Detection & Alerts</h3>
+                                <p class="slide-text">
+                                    Complaints approaching deadlines or being ignored trigger automatic escalation. Managers receive alerts and if still unresolved, the issue gets elevated to higher authorities — ensuring accountability at every step.
+                                </p>
+                            </div>
+                            <div class="col-lg-6 slide-image">
+                                <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Notification System">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="swiper-slide">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 slide-content">
+                                <div class="slide-icon"><i class="fas fa-chart-line"></i></div>
+                                <h3 class="slide-title">Real-time Tracking Dashboard</h3>
+                                <p class="slide-text">
+                                    Residents can track their complaint status in real-time. See exactly where your issue stands in the resolution pipeline, who's responsible, and estimated completion time. Complete transparency eliminates uncertainty.
+                                </p>
+                            </div>
+                            <div class="col-lg-6 slide-image">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Dashboard">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-pagination" style="padding-bottom:20px;position:relative;margin-top:10px;"></div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         STATS STRIP
+    ════════════════════════════════════ -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-6 col-md-3 stat-item fade-up">
+                    <div class="stat-number">151<span>+</span></div>
+                    <div class="stat-label">Happy Residents</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item fade-up delay-1">
+                    <div class="stat-number">90<span>%</span></div>
+                    <div class="stat-label">Resolution Rate</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item fade-up delay-2">
+                    <div class="stat-number">3.7<span>hrs</span></div>
+                    <div class="stat-label">Avg Response Time</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item fade-up delay-3">
+                    <div class="stat-number">216<span>+</span></div>
+                    <div class="stat-label">Complaints Resolved</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         PROBLEM / SOLUTION
+    ════════════════════════════════════ -->
+    <section id="solution">
+        <div class="container">
+            <div class="section-title fade-up">
+                <span class="section-eyebrow">Why AptCare Exists</span>
+                <h2>From Chaos to Clarity</h2>
+                <p>Because complaints should never be ignored, forgotten, or lost in paperwork. We're changing how apartments handle issues.</p>
+            </div>
+
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-5 fade-up delay-1">
+                    <div class="vs-card vs-card-problem h-100">
+                        <div class="vs-card-title text-danger">
+                            <i class="fas fa-times-circle"></i> The Old Way
+                        </div>
+                        <ul class="vs-card-list">
+                            <li><i class="fas fa-times li-icon"></i> Complaints get lost in emails or paper forms</li>
+                            <li><i class="fas fa-times li-icon"></i> No clear priority — critical issues wait in line</li>
+                            <li><i class="fas fa-times li-icon"></i> Zero accountability — no one knows who's responsible</li>
+                            <li><i class="fas fa-times li-icon"></i> Residents feel stressed and unheard</li>
+                            <li><i class="fas fa-times li-icon"></i> No tracking — you never know when it will be fixed</li>
+                            <li><i class="fas fa-times li-icon"></i> Delays cost money and cause frustration</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 vs-divider d-none d-lg-flex fade-up delay-2">
+                    <div class="vs-circle">VS</div>
+                </div>
+
+                <div class="col-lg-5 fade-up delay-3">
+                    <div class="vs-card vs-card-solution h-100">
+                        <div class="vs-card-title text-success">
+                            <i class="fas fa-check-circle"></i> The AptCare Way
+                        </div>
+                        <ul class="vs-card-list">
+                            <li><i class="fas fa-check li-icon"></i> Smart priority calculation based on impact & safety</li>
+                            <li><i class="fas fa-check li-icon"></i> Automatic neglect detection and escalation</li>
+                            <li><i class="fas fa-check li-icon"></i> Clear timelines and responsible persons assigned</li>
+                            <li><i class="fas fa-check li-icon"></i> Complete transparency throughout the process</li>
+                            <li><i class="fas fa-check li-icon"></i> Real-time tracking and status updates</li>
+                            <li><i class="fas fa-check li-icon"></i> Peace of mind for residents, efficiency for managers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         FEATURES GRID
+    ════════════════════════════════════ -->
+    <section id="benefits">
+        <div class="container">
+            <div class="section-title fade-up">
+                <span class="section-eyebrow">What Makes Us Different</span>
+                <h2>Built for Real Apartments</h2>
+                <p>Designed for real-world apartments and real people. Technology that serves, not complicates.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4 fade-up delay-1">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-brain"></i></div>
+                        <h4 class="feature-title">Smart Priority Engine</h4>
+                        <p class="feature-text">The system decides urgency based on impact, safety, evidence, and affected residents. Critical issues jump to the front automatically.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up delay-2">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#fef9c3,#fde68a);color:#d97706;"><i class="fas fa-bell"></i></div>
+                        <h4 class="feature-title">Neglect Detection</h4>
+                        <p class="feature-text">Automatically highlights overdue and ignored complaints. Escalation triggers ensure problems never fall through the cracks.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up delay-3">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#f0fdf4,#bbf7d0);color:#166534;"><i class="fas fa-shield-alt"></i></div>
+                        <h4 class="feature-title">Trust & Transparency</h4>
+                        <p class="feature-text">Users know what's happening, who's responsible, and how long it will take. No more guessing games about complaint status.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up delay-1">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#fff7ed,#fed7aa);color:#c2410c;"><i class="fas fa-mobile-alt"></i></div>
+                        <h4 class="feature-title">Mobile-First Design</h4>
+                        <p class="feature-text">Submit complaints, upload photos, and track progress from your smartphone. Designed for convenience wherever you are.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up delay-2">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#fdf4ff,#e9d5ff);color:#7c3aed;"><i class="fas fa-chart-pie"></i></div>
+                        <h4 class="feature-title">Analytics & Reports</h4>
+                        <p class="feature-text">Managers get insights on common issues, resolution times, and team performance. Data-driven improvements every month.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up delay-3">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:linear-gradient(135deg,#ecfeff,#a5f3fc);color:#0e7490;"><i class="fas fa-users"></i></div>
+                        <h4 class="feature-title">Community Focused</h4>
+                        <p class="feature-text">See common building issues, connect with neighbors about similar problems, and build a better living environment together.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         CTA
+    ════════════════════════════════════ -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-inner fade-up">
+                <div class="cta-badge">
+                    <i class="fas fa-rocket" style="color:var(--teal)"></i>
+                    Ready to Transform Your Building?
+                </div>
+                <h2 class="cta-title">Better Living Starts With Better Communication</h2>
+                <p class="cta-sub">Join thousands of residents and property managers who have transformed how complaints are handled.</p>
+                <a href="{% url 'login-page' %}" class="btn-cta">
+                    Get Started Today
+                    <i class="fas fa-arrow-right btn-arrow"></i>
+                </a>
+                <p style="margin-top:20px;font-size:0.82rem;color:rgba(255,255,255,0.35);">
+                    Together, we fix faster ✦
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════
+         FOOTER
+    ════════════════════════════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <a href="#" class="footer-brand">
+                        <img src="{% static 'aptCareLOGO.png' %}" alt="AptCare">
+                        <div class="footer-brand-text brand-name"><span class="apt">Apt</span><span class="care">Care</span></div>
+                    </a>
+                    <p class="footer-desc">Making apartment living better through technology, transparency, and trust. Every complaint matters.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Product</div>
+                    <ul class="footer-links">
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Use Cases</a></li>
+                        <li><a href="#">Updates</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Company</div>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Support</div>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Community</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-2">
+                    <div class="footer-heading">Get the App</div>
+                    <a href="#" class="footer-app-btn">
+                        <i class="fab fa-apple"></i> App Store
+                    </a>
+                    <a href="#" class="footer-app-btn">
+                        <i class="fab fa-google-play"></i> Play Store
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span class="footer-copy">&copy; 2025 AptCare. All rights reserved.</span>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+
+    <script>
+        // Initialize Swiper
+        var swiper = new Swiper(".mySwiper", {
+            slidesPerView: 1,
+            spaceBetween: 0,
+            loop: true,
+            autoplay: { delay: 6000, disableOnInteraction: false },
+            pagination: { el: ".swiper-pagination", clickable: true },
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+                navbar.style.padding = '0';
+            } else {
+                navbar.classList.remove('scrolled');
+                navbar.style.padding = '0';
+            }
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({ top: targetElement.offsetTop - 80, behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Scroll reveal animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    </script>
+    {% include 'resident_chatbot.html' %}
+</body>
+</html>

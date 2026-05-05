@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Guide | AptCare User</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --accent-light: #eef2ff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+            
+            /* Sidebar Dimensions */
+            --sidebar-width: 260px;
+            --sidebar-shrunk-width: 80px;
+        }
+        
+        body { 
+            background-color: var(--primary-bg); 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            overflow-x: hidden; 
+        }
+
+        /* ================= Layout & Sidebar ================= */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            display: flex; flex-direction: column; overflow-x: hidden;
+        }
+
+        #sidebar.shrunk { width: var(--sidebar-shrunk-width); }
+
+        .sidebar-brand {
+            height: 80px; display: flex; align-items: center; padding: 0 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.04); white-space: nowrap; overflow: hidden;
+            text-decoration: none; width: 100%;
+        }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s ease; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; overflow: hidden; }
+        
+        #sidebar .nav-item { width: 100%; padding: 0 16px; }
+        #sidebar .mt-auto { width: 100%; }
+        
+        #sidebar .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; 
+            font-weight: 500; white-space: nowrap; overflow: hidden; width: 100%;
+        }
+        #sidebar .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        #sidebar .nav-link:hover { background: var(--accent-light); color: var(--accent-color); }
+        #sidebar .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; min-width: 100%; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 34px; height: 34px; }
+        #sidebar.shrunk .nav-item { padding: 0 14px; }
+        #sidebar.shrunk .nav-link { padding: 14px 0; justify-content: center; margin: 0; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        /* ================= Main Content Area ================= */
+        #content { 
+            width: 100%; margin-left: var(--sidebar-width); 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        #content.expanded { margin-left: var(--sidebar-shrunk-width); }
+        .content-inner { padding: 30px; flex-grow: 1; }
+
+        /* ================= Smart Floating Header ================= */
+        .header-wrapper {
+            position: sticky; top: 0; z-index: 900;
+            padding-top: 20px; padding-bottom: 20px;
+            background: var(--primary-bg); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .header-wrapper.hide-header { transform: translateY(-100%); }
+
+        .top-header {
+            background: #ffffff; border-radius: 20px; padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); transition: all 0.2s; cursor: pointer; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* ================= Guide Specific Styles ================= */
+        .guide-card {
+            background: #ffffff; border: none; border-radius: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s, box-shadow 0.3s; height: 100%;
+        }
+        .guide-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+
+        .factor-icon {
+            width: 54px; height: 54px; border-radius: 16px;
+            background: var(--accent-light); color: var(--accent-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-bottom: 15px; transition: transform 0.3s;
+        }
+        .guide-card:hover .factor-icon { transform: scale(1.1) rotate(5deg); }
+
+        .priority-chip {
+            padding: 20px 24px; border-radius: 16px; color: #fff; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s;
+        }
+        .priority-chip:hover { transform: translateX(5px); }
+        
+        .bg-critical { background: linear-gradient(135deg, #dc2626, #991b1b); }
+        .bg-high     { background: linear-gradient(135deg, #ea580c, #9a3412); }
+        .bg-medium   { background: linear-gradient(135deg, #eab308, #a16207); }
+        .bg-low      { background: linear-gradient(135deg, #16a34a, #14532d); }
+
+        .priority-badge { font-weight: 800; padding: 8px 16px; border-radius: 50px; font-size: 0.8rem; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .trust-card { background: #eef2ff; border: 2px solid rgba(67, 97, 238, 0.1); border-radius: 20px; }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); width: var(--sidebar-width); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+            .priority-chip { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        <ul class="nav sidebar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'dashboard' %}">
+                    <i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'file-complaint-page' %}">
+                    <i class="fa fa-plus-circle"></i> <span class="nav-text">File Complaint</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'my-complaints-page' %}">
+                    <i class="fa fa-list-ul"></i> <span class="nav-text">My Complaints</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'priority-guide-page' %}">
+                    <i class="fa fa-book-open"></i> <span class="nav-text">Priority Guide</span>
+                </a>
+            </li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;">
+                        <i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span>
+                    </a>
+                </li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+        
+        <div class="header-wrapper" id="smartHeader">
+            <div class="content-inner pb-0">
+                <header class="top-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <button id="sidebarToggle" class="toggle-btn shadow-sm">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div>
+                            <h1 class="header-title">Priority Guide</h1>
+                            <p class="text-muted small mb-0 d-none d-md-block">Understand how fairness, safety, and fast resolutions work.</p>
+                        </div>
+                    </div>
+                </header>
+            </div>
+        </div>
+
+        <div class="content-inner pt-2">
+
+            <h5 class="fw-bold mb-3 text-dark">What determines priority?</h5>
+            <div class="row g-4 mb-5">
+                <div class="col-md-3">
+                    <div class="guide-card p-4 text-center">
+                        <div class="factor-icon mx-auto"><i class="fa fa-plug"></i></div>
+                        <h6 class="fw-bold text-dark">Type of Issue</h6>
+                        <p class="small text-muted mb-0 fw-medium">Electrical, Water, and Lifts are naturally critical and handled faster.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="guide-card p-4 text-center">
+                        <div class="factor-icon mx-auto"><i class="fa fa-users"></i></div>
+                        <h6 class="fw-bold text-dark">People Affected</h6>
+                        <p class="small text-muted mb-0 fw-medium">Issues affecting an entire block get higher priority than single flats.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="guide-card p-4 text-center">
+                        <div class="factor-icon mx-auto"><i class="fa fa-shield-virus"></i></div>
+                        <h6 class="fw-bold text-dark">Safety Risk</h6>
+                        <p class="small text-muted mb-0 fw-medium">Safety-related issues are always treated as urgent emergencies.</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="guide-card p-4 text-center">
+                        <div class="factor-icon mx-auto"><i class="fa fa-camera"></i></div>
+                        <h6 class="fw-bold text-dark">Evidence Provided</h6>
+                        <p class="small text-muted mb-0 fw-medium">Photos help us understand the issue instantly and resolve it quicker.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3 text-dark">Priority Levels & Service Level Agreements (SLA)</h5>
+            <div class="row mb-5 g-4">
+                <div class="col-md-6">
+                    <div class="priority-chip bg-critical">
+                        <div>
+                            <h6 class="mb-1 fw-bold fs-5"><i class="fa fa-radiation me-2"></i>Critical Priority</h6>
+                            <span class="opacity-75 small fw-bold">Safety risks or essential service loss</span>
+                        </div>
+                        <span class="badge bg-white text-danger priority-badge">Within 2 Hours</span>
+                    </div>
+                    <div class="priority-chip bg-high">
+                        <div>
+                            <h6 class="mb-1 fw-bold fs-5"><i class="fa fa-triangle-exclamation me-2"></i>High Priority</h6>
+                            <span class="opacity-75 small fw-bold">Major disruptions to standard living</span>
+                        </div>
+                        <span class="badge bg-white text-warning priority-badge" style="color: #c2410c !important;">Within 8 Hours</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="priority-chip bg-medium">
+                        <div>
+                            <h6 class="mb-1 fw-bold fs-5"><i class="fa fa-bell me-2"></i>Medium Priority</h6>
+                            <span class="opacity-75 small fw-bold">Affects daily routine but not critical</span>
+                        </div>
+                        <span class="badge bg-white text-dark priority-badge" style="color: #b45309 !important;">Within 24 Hours</span>
+                    </div>
+                    <div class="priority-chip bg-low">
+                        <div>
+                            <h6 class="mb-1 fw-bold fs-5"><i class="fa fa-circle-check me-2"></i>Low Priority</h6>
+                            <span class="opacity-75 small fw-bold">Minor inconvenience or aesthetic</span>
+                        </div>
+                        <span class="badge bg-white text-success priority-badge">Within 48 Hours</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trust-card p-4 p-md-5">
+                <div class="d-flex align-items-center mb-4">
+                    <i class="fa fa-heart-circle-check fa-2x text-primary me-3"></i>
+                    <h4 class="fw-bold mb-0 text-dark">Why You Don't Need to Worry</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-3 fw-bold text-dark"><i class="fa fa-check-circle text-success me-2 fs-5 align-middle"></i> You don't need to call or remind us.</li>
+                            <li class="mb-3 fw-bold text-dark"><i class="fa fa-check-circle text-success me-2 fs-5 align-middle"></i> The system tracks resolution time automatically.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-3 fw-bold text-dark"><i class="fa fa-check-circle text-success me-2 fs-5 align-middle"></i> Escalation happens instantly if delayed.</li>
+                            <li class="mb-3 fw-bold text-dark"><i class="fa fa-check-circle text-success me-2 fs-5 align-middle"></i> You’ll be notified of every status update.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ─────────────────────────────────────────
+    // CONFIG & AUTH GUARD
+    // ─────────────────────────────────────────
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token = localStorage.getItem('aptcare_token');
+    const user  = JSON.parse(localStorage.getItem('aptcare_user') || 'null');
+
+    if (!token || !user) window.location.href = '{% url "login-page" %}';
+
+    // ─────────────────────────────────────────
+    // UI: SIDEBAR & SMART HEADER
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    let lastScrollTop = 0;
+    const smartHeader = document.getElementById('smartHeader');
+    window.addEventListener('scroll', function() {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            smartHeader.classList.add('hide-header');
+        } else {
+            smartHeader.classList.remove('hide-header');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+    }, false);
+
+    // ─────────────────────────────────────────
+    // SIGN OUT
+    // ─────────────────────────────────────────
+    document.getElementById('signOutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            await fetch(`${API_BASE}/auth/logout/`, {
+                method : 'POST',
+                headers: { 'Authorization': `Token ${token}` }
+            });
+        } catch (_) {}
+        
+        localStorage.clear();
+        window.location.href = '{% url "login-page" %}';
+    });
+</script>
+{% include 'resident_chatbot.html' %}
+</body>
+</html>

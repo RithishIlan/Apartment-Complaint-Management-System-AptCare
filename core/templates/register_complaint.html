@@ -1,0 +1,485 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Complaint | AptCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f4f7fe;
+            --sidebar-color: #ffffff;
+            --accent-color: #4361ee;
+            --dark-text: #2b3674;
+            --gray-text: #a3aed1;
+        }
+        body { background-color: var(--primary-bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+
+        /* --- SIDEBAR (Sleek UI) --- */
+        .wrapper { display: flex; width: 100%; align-items: stretch; min-height: 100vh; }
+        #sidebar {
+            width: 260px; background: var(--sidebar-color); min-height: 100vh;
+            border-right: 1px solid rgba(0,0,0,0.05); transition: all 0.3s;
+            position: fixed; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.02);
+            display: flex; flex-direction: column; overflow-x: hidden;
+        }
+        #sidebar.shrunk { width: 80px; }
+        
+        .sidebar-brand {
+            height: 80px; display: flex; align-items: center; padding: 0 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.04); text-decoration: none; min-width: 260px;
+        }
+        .sidebar-brand img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; flex-shrink: 0; transition: all 0.3s; }
+        .sidebar-brand .brand-text { font-size: 1.4rem; font-weight: 800; margin-left: 12px; color: var(--dark-text); transition: opacity 0.2s; }
+        .sidebar-brand .brand-text span { color: var(--accent-color); }
+        
+        .sidebar-nav { padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { 
+            color: #707eae; padding: 12px 20px; border-radius: 12px; margin: 0 16px; 
+            transition: all 0.2s; display: flex; align-items: center; text-decoration: none; font-weight: 500; min-width: 228px;
+        }
+        .nav-link i { font-size: 1.25rem; width: 24px; text-align: center; flex-shrink: 0; margin-right: 12px; transition: margin 0.3s; }
+        .nav-link:hover { background: #eef2ff; color: var(--accent-color); }
+        .nav-link.active { background: var(--accent-color); color: #ffffff; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+
+        #sidebar.shrunk .brand-text, #sidebar.shrunk .nav-text { opacity: 0; display: none; }
+        #sidebar.shrunk .sidebar-brand { padding: 0; min-width: 100%; justify-content: center; }
+        #sidebar.shrunk .sidebar-brand img { width: 54px; height: 54px; }
+        #sidebar.shrunk .nav-link { margin: 0 14px; padding: 14px 0; justify-content: center; min-width: auto; }
+        #sidebar.shrunk .nav-link i { margin-right: 0; font-size: 1.4rem; }
+
+        #content { width: 100%; margin-left: 260px; transition: all 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
+        #content.expanded { margin-left: 80px; }
+        .content-inner { padding: 30px; flex-grow: 1; }
+
+        @media (max-width: 991px) {
+            #sidebar { transform: translateX(-100%); width: 260px; }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #content { margin-left: 0 !important; }
+        }
+
+        /* --- HEADER --- */
+        .top-header {
+            background: #ffffff; border-radius: 20px; padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+        }
+        .header-title { font-size: 1.4rem; font-weight: 700; color: var(--dark-text); margin: 0; }
+        .toggle-btn { background: #f4f7fe; border: none; width: 42px; height: 42px; border-radius: 12px; color: var(--accent-color); cursor: pointer; transition: 0.2s; }
+        .toggle-btn:hover { background: var(--accent-color); color: white; }
+
+        /* --- FORM STYLES --- */
+        .form-card { background: #ffffff; border: none; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        
+        .section-title { font-size: 0.85rem; font-weight: 800; color: #a3aed1; letter-spacing: 1px; border-bottom: 2px solid #f4f7fe; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        
+        .form-label { font-weight: 600; color: var(--dark-text); font-size: 0.95rem; }
+        .form-select, .form-control { border: 2px solid #eef1fd; border-radius: 10px; padding: 12px; font-size: 0.95rem; background: #f8faff; transition: 0.2s; }
+        .form-select:focus, .form-control:focus { border-color: var(--accent-color); background: #ffffff; box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+        
+        /* Validation Error State */
+        .is-invalid { border-color: #dc3545 !important; background-color: #fff8f8 !important; }
+        .invalid-feedback-custom { display: none; color: #dc3545; font-size: 0.8rem; font-weight: 600; margin-top: 5px; }
+        .is-invalid ~ .invalid-feedback-custom { display: block; }
+
+        /* Priority Badge Engine */
+        .priority-display { padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 10px; transition: all 0.3s; border: 2px solid transparent; }
+        .p-low      { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+        .p-medium   { background: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+        .p-high     { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+        .p-critical { background: #7f1d1d; color: #ffffff; border-color: #dc2626; box-shadow: 0 8px 20px rgba(220,38,38,0.3); animation: pulseRed 2s infinite; }
+
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); } 70% { box-shadow: 0 0 0 15px rgba(220,38,38,0); } 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); } }
+
+        /* Media Upload */
+        .upload-area { border: 2px dashed #a3aed1; border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.2s; background: #f8faff; }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--accent-color); background: #eef2ff; }
+        
+        .hazard-box { background: #fff5f5; border: 2px solid #ffe4e4; border-radius: 12px; padding: 16px; transition: 0.2s; }
+        .form-check-input:checked { background-color: #dc3545; border-color: #dc3545; }
+        .hazard-box:has(.form-check-input:checked) { border-color: #dc3545; background: #fff0f0; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <nav id="sidebar">
+        <a href="#" class="sidebar-brand">
+            <img src="{% static 'aptCareLOGO.png' %}" alt="Logo">
+            <span class="brand-text">Apt<span>Care</span></span>
+        </a>
+        <ul class="nav sidebar-nav">
+            <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="fa fa-th-large"></i> <span class="nav-text">Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{% url 'file-complaint-page' %}"><i class="fa fa-plus-circle"></i> <span class="nav-text">File Complaint</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'my-complaints-page' %}"><i class="fa fa-list-ul"></i> <span class="nav-text">My Complaints</span></a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'priority-guide-page' %}"><i class="fa fa-book-open"></i> <span class="nav-text">Priority Guide</span></a></li>
+            <div class="mt-auto">
+                <hr class="mx-3 opacity-25">
+                <li class="nav-item"><a class="nav-link text-danger" href="#" id="signOutBtn" style="color: #dc3545 !important;"><i class="fa fa-sign-out-alt"></i> <span class="nav-text">Sign Out</span></a></li>
+            </div>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <div class="content-inner">
+            <header class="top-header">
+                <div class="d-flex align-items-center gap-3">
+                    <button id="sidebarToggle" class="toggle-btn shadow-sm"><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="header-title">File a Complaint</h1>
+                        <p class="text-muted small mb-0 d-none d-sm-block">Factual data allows our engine to dispatch staff efficiently.</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card form-card p-4 p-lg-5 mb-4">
+                        <form id="complaintForm" novalidate>
+
+                            <h6 class="section-title">1. Categorization & Location</h6>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select req-field" id="category">
+                                        <option value="" selected disabled>Select Category...</option>
+                                    </select>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Exact Location <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control req-field" id="location" placeholder="e.g. Block A, Master Bathroom">
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                            </div>
+
+                            <h6 class="section-title">2. Real-World Assessment (Priority Engine) <span class="text-danger">*</span></h6>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-6">
+                                    <label class="form-label">Scope of Issue<span class="text-danger">*</span></label>
+                                    <select class="form-select req-field score-trigger" id="scope">
+                                        <option value="" selected disabled>Select affected area...</option>
+                                        <option value="5">Single Room / Appliance</option>
+                                        <option value="10">My Entire Flat</option>
+                                        <option value="15">Multiple Flats / Corridor</option>
+                                        <option value="20">Entire Building / Common Area</option>
+                                    </select>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Operational Impact<span class="text-danger">*</span></label>
+                                    <select class="form-select req-field score-trigger" id="operationalImpact">
+                                        <option value="" selected disabled>Select severity...</option>
+                                        <option value="0">Minor inconvenience (Cosmetic/Slight)</option>
+                                        <option value="8">Partial loss of use (e.g. one toilet broken)</option>
+                                        <option value="20">Total loss of essential service (No water/power)</option>
+                                    </select>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Deterioration Speed<span class="text-danger">*</span></label>
+                                    <select class="form-select req-field score-trigger" id="worsening">
+                                        <option value="" selected disabled>Is it getting worse?</option>
+                                        <option value="0">Stable (Not spreading/worsening)</option>
+                                        <option value="15">Actively worsening (e.g. active water leak)</option>
+                                    </select>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Vulnerable Residents<span class="text-danger">*</span></label>
+                                    <select class="form-select req-field score-trigger" id="vulnerable">
+                                        <option value="" selected disabled>Any vulnerable people affected?</option>
+                                        <option value="0">No / Not applicable</option>
+                                        <option value="10">Yes (Infants, Elderly, Medical needs)</option>
+                                    </select>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                            </div>
+
+                            <h6 class="section-title">3. Safety & Evidence</h6>
+                            <div class="row g-4 mb-5">
+                                <div class="col-12">
+                                    <div class="hazard-box">
+                                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                                            <input class="form-check-input score-trigger" type="checkbox" id="safetyRisk" style="width:40px;height:20px;cursor:pointer;">
+                                            <label class="form-check-label fw-bold text-danger mb-0 ms-2" for="safetyRisk" style="cursor:pointer;font-size:1.1rem;">
+                                                <i class="fa fa-triangle-exclamation me-1"></i> Immediate Safety or Security Hazard
+                                            </label>
+                                        </div>
+                                        <p class="text-muted small ms-5 mt-1 mb-0">Toggle ONLY if there is a fire risk, exposed wiring, structural collapse, or a physical security breach.</p>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Description <span class="text-danger">*</span></label>
+                                    <textarea class="form-control req-field" id="description" rows="5" placeholder="Describe the issue in detail..."></textarea>
+                                    <div class="invalid-feedback-custom"><i class="fa fa-exclamation-circle me-1"></i>Required field.</div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Media Evidence (Required for specific issues)</label>
+                                    <div class="upload-area" id="uploadArea">
+                                        <i class="fa fa-camera-retro fa-2x text-primary mb-2"></i>
+                                        <p class="mb-1 fw-bold text-dark">Upload Photo or Video</p>
+                                        <p class="mb-0 text-muted small">Only .jpg, .png, .mp4 formats accepted.</p>
+                                        <p class="mb-0 fw-bold text-success small d-none mt-2" id="fileUploadedMsg">
+                                            <i class="fa fa-check me-1"></i><span id="fileNameDisplay"></span>
+                                        </p>
+                                        <p class="mb-0 fw-bold text-danger small d-none mt-2" id="fileErrorMsg">
+                                            <i class="fa fa-times me-1"></i>Invalid file type! Photo/Video only.
+                                        </p>
+                                        <input type="file" id="fileInput" hidden accept="image/*,video/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary rounded-pill py-3 fw-bold text-uppercase shadow-sm" id="submitBtn" style="letter-spacing:1px;font-size:1.1rem;">
+                                    Confirm & Submit to Triage
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 d-none d-lg-block">
+                    <div class="position-sticky" style="top: 100px;">
+                        <h6 class="fw-bold text-muted text-uppercase small mb-3">Live Triage Status</h6>
+                        <div id="priorityBadge" class="priority-display p-low flex-column align-items-center justify-content-center text-center py-4">
+                            <i class="fa fa-circle-check fa-3x mb-2"></i>
+                            <div class="text-uppercase small fw-bold opacity-75">Estimated Priority</div>
+                            <div class="fs-4 fw-bolder" id="priorityLabelText">LOW</div>
+                        </div>
+                        <div class="alert alert-info border-0 bg-white shadow-sm mt-3 small">
+                            <i class="fa fa-info-circle text-primary me-2"></i>
+                            <strong>Why is this asked?</strong> Our intelligent triage system analyzes your responses to automatically escalate emergencies to management within seconds.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://127.0.0.1:8000/api';
+    const token = localStorage.getItem('aptcare_token');
+    if (!token) window.location.href = '{% url "login-page" %}';
+
+    // ─────────────────────────────────────────
+    // UI TOGGLES
+    // ─────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        if (window.innerWidth > 991) {
+            sidebar.classList.toggle('shrunk');
+            content.classList.toggle('expanded');
+        } else {
+            sidebar.classList.toggle('mobile-open');
+        }
+    });
+
+    // ─────────────────────────────────────────
+    // LOAD CATEGORIES (Filtering out "Others")
+    // ─────────────────────────────────────────
+    async function loadCategories() {
+        const select = document.getElementById('category');
+        try {
+            const res  = await fetch(`${API_BASE}/categories/`, { headers: { 'Authorization': `Token ${token}` } });
+            const data = await res.json();
+            
+            // Filter out any category named "other", "others", "miscellaneous"
+            const filteredData = data.filter(cat => {
+                const name = cat.name.toLowerCase().trim();
+                return name !== 'other' && name !== 'others' && name !== 'miscellaneous';
+            });
+
+            select.innerHTML = `<option value="" selected disabled>Select Category...</option>` +
+                filteredData.map(cat => `<option value="${cat.id}" data-score="${cat.base_score}">${cat.name}</option>`).join('');
+            
+            select.addEventListener('change', calculatePriority);
+        } catch (err) {
+            select.innerHTML = `<option value="">Failed to load</option>`;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // STRICT MEDIA UPLOAD LOGIC
+    // ─────────────────────────────────────────
+    let hasFile = false;
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        const successMsg = document.getElementById('fileUploadedMsg');
+        const errorMsg = document.getElementById('fileErrorMsg');
+        const nameSpan = document.getElementById('fileNameDisplay');
+        
+        hasFile = false;
+        successMsg.classList.add('d-none');
+        errorMsg.classList.add('d-none');
+        uploadArea.style.borderColor = '#a3aed1';
+
+        if (file) {
+            // STRICT VALIDATION: Must be image or video
+            if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+                hasFile = true;
+                nameSpan.textContent = file.name;
+                successMsg.classList.remove('d-none');
+                uploadArea.style.borderColor = '#28a745';
+            } else {
+                // Reject the file completely
+                this.value = ''; 
+                errorMsg.classList.remove('d-none');
+                uploadArea.style.borderColor = '#dc3545';
+            }
+        }
+        calculatePriority();
+    });
+
+    // ─────────────────────────────────────────
+    // REAL-WORLD TRIAGE CALCULATOR
+    // ─────────────────────────────────────────
+    function calculatePriority() {
+        const catSelect = document.getElementById('category');
+        const catScore = parseInt(catSelect.options[catSelect.selectedIndex]?.dataset?.score) || 0;
+        
+        // Frontend Matrix Scores
+        const scopeScore      = parseInt(document.getElementById('scope').value) || 0;
+        const impactScore     = parseInt(document.getElementById('operationalImpact').value) || 0;
+        const worseningScore  = parseInt(document.getElementById('worsening').value) || 0;
+        const vulnerableScore = parseInt(document.getElementById('vulnerable').value) || 0;
+        
+        const isSafety = document.getElementById('safetyRisk').checked;
+        const evidenceScore = hasFile ? 10 : 0;
+
+        // If safety is checked, bump frontend logic high enough to force High/Critical 
+        // even before the backend adds its own +25 safety score.
+        const safetyModifier = isSafety ? 15 : 0;
+
+        // Total Impact sent to Backend (Replacing basic 1-to-5)
+        const dynamicImpact = scopeScore + impactScore + worseningScore + vulnerableScore + safetyModifier;
+
+        // Prediction of final backend score
+        // Backend formula: category_score + impact_scope + (25 if safety) + (10 if file)
+        const predictedTotal = catScore + dynamicImpact + (isSafety ? 25 : 0) + evidenceScore;
+
+        let level = 'LOW'; let cssClass = 'p-low'; let icon = 'fa-circle-check';
+        
+        if (predictedTotal >= 76) {
+            level = 'CRITICAL'; cssClass = 'p-critical'; icon = 'fa-skull-crossbones';
+        } else if (predictedTotal >= 51) {
+            level = 'HIGH'; cssClass = 'p-high'; icon = 'fa-fire';
+        } else if (predictedTotal >= 26) {
+            level = 'MEDIUM'; cssClass = 'p-medium'; icon = 'fa-bell';
+        }
+
+        const badge = document.getElementById('priorityBadge');
+        badge.className = `priority-display flex-column align-items-center justify-content-center text-center py-4 ${cssClass}`;
+        badge.innerHTML = `<i class="fa ${icon} fa-3x mb-2"></i>
+                           <div class="text-uppercase small fw-bold opacity-75">Estimated Priority</div>
+                           <div class="fs-4 fw-bolder">${level}</div>`;
+    }
+
+    // Attach listeners to all engine dropdowns
+    document.querySelectorAll('.score-trigger').forEach(el => {
+        el.addEventListener('change', calculatePriority);
+    });
+
+    // ─────────────────────────────────────────
+    // FORM SUBMISSION & VALIDATION
+    // ─────────────────────────────────────────
+    document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Reset old validation visuals
+        let isValid = true;
+        let firstErrorField = null;
+        document.querySelectorAll('.req-field').forEach(field => {
+            field.classList.remove('is-invalid');
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+                if (!firstErrorField) firstErrorField = field;
+            }
+        });
+
+        if (!isValid) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return; // Stop submission
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Processing...`;
+
+        try {
+            // Calculate our super-impact score to send to the backend's "impact_scope"
+            const scopeScore      = parseInt(document.getElementById('scope').value) || 0;
+            const impactScore     = parseInt(document.getElementById('operationalImpact').value) || 0;
+            const worseningScore  = parseInt(document.getElementById('worsening').value) || 0;
+            const vulnerableScore = parseInt(document.getElementById('vulnerable').value) || 0;
+            const isSafety        = document.getElementById('safetyRisk').checked;
+            const safetyModifier  = isSafety ? 15 : 0;
+            
+            const compiledImpactScore = scopeScore + impactScore + worseningScore + vulnerableScore + safetyModifier;
+
+            const formData = new FormData();
+            formData.append('category', document.getElementById('category').value);
+            formData.append('location', document.getElementById('location').value.trim());
+            // Send the compiled mega-score so the backend calculates it as High/Critical
+            formData.append('impact_scope', compiledImpactScore); 
+            formData.append('is_safety_risk', isSafety);
+            formData.append('description', document.getElementById('description').value.trim());
+
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+
+            const response = await fetch(`${API_BASE}/complaints/file/`, {
+                method : 'POST',
+                headers: { 'Authorization': `Token ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert('Submission failed. Please check the fields and try again.');
+                btn.disabled = false;
+                btn.innerHTML = `Confirm & Submit to Triage`;
+                return;
+            }
+
+            // Success
+            window.location.href = '{% url "my-complaints-page" %}';
+
+        } catch (err) {
+            alert('Cannot connect to server. Please check your internet.');
+            btn.disabled = false;
+            btn.innerHTML = `Confirm & Submit to Triage`;
+        }
+    });
+
+    // Remove red borders instantly when user starts typing/selecting
+    document.querySelectorAll('.req-field').forEach(field => {
+        field.addEventListener('input', function() { this.classList.remove('is-invalid'); });
+        field.addEventListener('change', function() { this.classList.remove('is-invalid'); });
+    });
+
+    document.getElementById('signOutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await fetch(`${API_BASE}/auth/logout/`, { method:'POST', headers:{ 'Authorization':`Token ${token}` }}); } catch(_) {}
+        localStorage.clear(); window.location.href = '{% url "login-page" %}';
+    });
+
+    loadCategories();
+</script>
+{% include 'resident_chatbot.html' %}
+</body>
+</html>
