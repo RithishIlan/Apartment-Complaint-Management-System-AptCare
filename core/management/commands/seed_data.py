@@ -129,8 +129,8 @@ class Command(BaseCommand):
     def seed_residents(self):
         residents = []
         self.stdout.write('🏠 Generating diverse Residents (Active, Inactive, Pending)...')
-        for block in list('ABCDE'):
-            for flat in range(101, 131):
+        for block in list('AB'):
+            for flat in range(101, 106):
                 username = f"{block}-{flat}"
                 first = random.choice(FIRST_NAMES)
                 
@@ -213,18 +213,18 @@ class Command(BaseCommand):
         for cat in CATEGORIES:
             make_complaint(timedelta(days=random.randint(1, 5)), 'resolved', forced_cat=cat[0])
 
-        for _ in range(6): make_complaint(timedelta(hours=random.randint(0, 3)), 'pending')
-        for _ in range(8): make_complaint(timedelta(hours=random.randint(2, 8)), 'in_progress')
-        for _ in range(7): make_complaint(timedelta(hours=random.randint(5, 12)), 'resolved')
+        for _ in range(2): make_complaint(timedelta(hours=random.randint(0, 3)), 'pending')
+        for _ in range(3): make_complaint(timedelta(hours=random.randint(2, 8)), 'in_progress')
+        for _ in range(2): make_complaint(timedelta(hours=random.randint(5, 12)), 'resolved')
 
-        for _ in range(15): make_complaint(timedelta(days=1, hours=random.randint(0, 23)), 'resolved')
-        for _ in range(4): make_complaint(timedelta(days=1, hours=random.randint(0, 23)), 'in_progress')
+        for _ in range(3): make_complaint(timedelta(days=1, hours=random.randint(0, 23)), 'resolved')
+        for _ in range(1): make_complaint(timedelta(days=1, hours=random.randint(0, 23)), 'in_progress')
         
-        for _ in range(3): make_complaint(timedelta(days=2, hours=random.randint(0, 10)), 'pending', 'critical') 
+        for _ in range(2): make_complaint(timedelta(days=2, hours=random.randint(0, 10)), 'pending', 'critical') 
 
-        for _ in range(40): make_complaint(timedelta(days=random.randint(2, 7)), 'resolved')
-        for _ in range(60): make_complaint(timedelta(days=random.randint(8, 30)), 'resolved')
-        for _ in range(80): make_complaint(timedelta(days=random.randint(31, 180)), 'resolved')
+        for _ in range(4): make_complaint(timedelta(days=random.randint(2, 7)), 'resolved')
+        for _ in range(5): make_complaint(timedelta(days=random.randint(8, 30)), 'resolved')
+        for _ in range(6): make_complaint(timedelta(days=random.randint(31, 180)), 'resolved')
 
         return complaints
 

@@ -28,4 +28,12 @@ if not User.objects.filter(username='resident1').exists():
         is_active=True
     )
 
+# 3. Conditionally run seed_data if the database is empty
+from core.models import Complaint
+from django.core.management import call_command
+
+if not Complaint.objects.exists():
+    print("Database appears empty. Running seed_data...")
+    call_command('seed_data')
+
 print("Startup configuration completed successfully.")
